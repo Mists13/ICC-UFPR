@@ -4,39 +4,42 @@
 #include <stdio.h>
 #include <string.h>
 #include <matheval.h>
+#include "iteracaoLinear.h"
 
 double phiNr(double x, char *f) {
     void *g = evaluator_create (f);  
     void *dg = evaluator_derivative_x (f);
     assert (g);
     assert (dg);
+    
     return (x - (evaluator_evaluate_x(g, x)) / evaluator_evaluate_x(dg, x)); // x_{i+1} = - (f(x_i)/f'(x_i))
 }
 
 double phiSecante(double x, double xOld , char *f) {
-    double resOld = function(xOld, f);
-    double res = function(x, f);
+    double res = fx(x, f);
+    double resOld = fx(xOld, f);
 
     return (x - (res * (x - xOld)) / (res - resOld)); // x_{i+1} = x_i - f(x_i)*(x_i - x_{i-1}) / f(x_i) - f(x_{i-1})
 }
 
-double function(double x, char *f) {
+double fx(double x, char *f) {
     void *g = evaluator_create(f);
     assert(g);
     
     return evaluator_evaluate_x(g, x);
 }
 
-double functionDerivative(double x, char *f) {
+double fxDerivative(double x, char *f) {
     void *g = evaluator_create (f);
     assert(g);
-    *g = evaluator_derivative_x(g);
+    
+    g = evaluator_derivative_x(g);
     assert(g);
-
+    
     return evaluator_evaluate_x(g, x);
 }
 
-double newtonRaphson(double x0, char *f, double phi(double x), double epsilon_x, int max_iter){
+double newtonRaphson(double x0, char *f, double phi(double x), double epsilon_x, int max_iter) {
 
     double x_new, x_old = x0;
     int criterio1, criterio2;
@@ -64,11 +67,10 @@ int main(int argc, char *argv[]){
 
     // printf("F(x): %s, x0: %1.16e, Epsilon: %1.16e, Max iterations: %d\n", function, initialAprox, epsilon, max_iter);
 
-    printf ("f(0.1) = %g\n", function(0.1, string));
-    printf ("f'(0.1) = %g\n", functionDerivative(0.1, string));
+    printf("f(0.1) = %g\n", fx(0.1, string));
+    printf ("f'(0.1) = %g\n", fxDerivative(0.1, string));
     // iteracao(initialAprox, function, phi, epsilon, max_iter);
     // newtonRaphson(initialAprox, function, epsilon, max_iter);
 
     return 0;
-
- }
+}
