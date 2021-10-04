@@ -6,22 +6,6 @@
 #include <matheval.h>
 #include "iteracaoLinear.h"
 
-double phiNr(double x, char *f) {
-    void *g = evaluator_create (f);  
-    void *dg = evaluator_derivative_x (f);
-    assert (g);
-    assert (dg);
-    
-    return (x - (evaluator_evaluate_x(g, x)) / evaluator_evaluate_x(dg, x)); // x_{i+1} = - (f(x_i)/f'(x_i))
-}
-
-double phiSecante(double x, double xOld , char *f) {
-    double res = fx(x, f);
-    double resOld = fx(xOld, f);
-
-    return (x - (res * (x - xOld)) / (res - resOld)); // x_{i+1} = x_i - f(x_i)*(x_i - x_{i-1}) / f(x_i) - f(x_{i-1})
-}
-
 double fx(double x, char *f) {
     void *g = evaluator_create(f);
     assert(g);
@@ -37,6 +21,17 @@ double fxDerivative(double x, char *f) {
     assert(g);
     
     return evaluator_evaluate_x(g, x);
+}
+
+double phiNr(double x, char *f) {
+    return (x - (fx(x, f)) / fxDerivative(x, f)); // x_{i+1} = x - ( f(x_i)/f'(x_i) )
+}
+
+double phiSecante(double x, double xOld , char *f) {
+    double res = fx(x, f);
+    double resOld = fx(xOld, f);
+
+    return (x - (res * (x - xOld)) / (res - resOld)); // x_{i+1} = x_i - ( f(x_i)*(x_i - x_{i-1}) / f(x_i) - f(x_{i-1}) )
 }
 
 double newtonRaphson(double x0, char *f, double phi(double x), double epsilon_x, int max_iter) {
