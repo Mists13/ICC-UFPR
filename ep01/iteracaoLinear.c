@@ -41,54 +41,48 @@ double phiSecante(double x, double xOld , char *f) {
 
 void newtonRaphsonESecante(double x0, char *f, double phiNewton(double x, char *f), double epsilon_x, int max_iter) {
 
-    double newton_x_new = x0;
-    double newton_x = x0;
-    double secante_x = x0;              // xi
-    double secante_x_new = x0;          // xi+1
-    double secante_x_old = x0;          // xi-1
-    double x_old = x0;
-    
-    int criterio1, criterio2;
-    int criterio_newton = 0;
-    int criterio_secante = 0;
-    int i = 2;
-    double absError = x0;
-    double relativeError = x0;
+    double newton_x_new, newton_x, secante_x, secante_x_new, secante_x_old;
+    double newton_crit, secante_crit;
+    double abs_error, relative_error;
+    int stop, stop_newton, stop_secante, i;
 
-    printf("Iteração: %d, Secante x new: %1.16e, Newton x new: %1.16e\n", 0, secante_x, newton_x);
-    newton_x = newton_x_new;
-    newton_x_new = phiNewton(newton_x, f); 
-    criterio_newton = (fabs(fx(newton_x_new, f)) < epsilon_x);
-    secante_x_new = newton_x_new;
+    printf("i, newton_x, newton_crit, secante_x, secante_crit\n");
+    newton_crit = secante_crit = fabs(fx(x0, f));
+    // printa primeira aproximação - valor de input
+    printf("%d,%1.16e,%1.16e,%1.16e,%1.16e", 0, x0, newton_crit, x0, secante_crit);  
 
-    // o valor de x1 para o metódo da secante é o resultado da 
-    // primeira iteração do método newton
-    printf("Iteração: %d, Secante x new: %1.16e, critério secante: %1.16e, Newton x new: %1.16e, critério newton : %1.16e\n", 1, newton_x_new, newton_x_new, fabs(fx(newton_x_new, f)), fabs(fx(newton_x_new, f)));
+    // o valor da primeira iteração para o metódo da secante é o resultado da primeira iteração do método newton
+    secante_x = x0;
+    newton_x_new = secante_x_new = phiNewton(x0, f);     
+    newton_crit  = secante_crit = fabs(fx(newton_x_new, f));
+    stop_newton = stop_secante = (newton_crit < epsilon_x);
 
-    
-    do
+    // printa primeira iteração
+    printf("%d,%1.16e,%1.16e,%1.16e,%1.16e\n", 0, newton_x_new, newton_crit, secante_x_new, secante_crit);
+
+    i = 2;
+    while ((i != max_iter) && !(stop_newton && stop_secante))
     {
-        if (!criterio_secante){
+        if (!stop_secante){
             secante_x_old = secante_x;
             secante_x = secante_x_new;
             secante_x_new = phiSecante(secante_x, secante_x_old, f);
-
-            criterio_secante = (fabs(fx(secante_x_new, f)) < epsilon_x);
+            
+            secante_crit = fabs(fx(secante_x_new, f));
+            stop_secante = (secante_crit < epsilon_x);
         }
         
-        if (!criterio_newton) {
+        if (!stop_newton) {
             newton_x = newton_x_new;    
             newton_x_new = phiNewton(newton_x, f); 
-                                     
-            criterio_newton = (fabs(fx(newton_x_new, f)) < epsilon_x);
+
+            newton_crit = fabs(fx(newton_x_new, f));                   
+            stop_newton = (newton_crit < epsilon_x);
         }
 
-        printf("Iteração: %d, Secante x new: %1.16e, critério secante: %1.16e, Newton x new: %1.16e, critério newton : %1.16e\n", i, secante_x_new, fabs(fx(secante_x_new, f)), newton_x_new, fabs(fx(newton_x_new, f)));
-
-        criterio1 = (criterio_newton && criterio_secante);
-        criterio2 = (i == max_iter);
+        printf("%d,%1.16e,%1.16e,%1.16e,%1.16e\n", i, newton_x_new, newton_crit, secante_x_new, secante_crit); 
         ++i;
-    } while (!criterio1 && !criterio2);  
+    }
  }
 
 int main(int argc, char *argv[]){
