@@ -1,6 +1,5 @@
 *.o
 *.out
-ep01
 
 # Editor directories and files
 .vscode/*
