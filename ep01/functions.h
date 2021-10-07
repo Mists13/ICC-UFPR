@@ -7,6 +7,7 @@ double fx(double x, char *f);
 double dfx(double x, char *f);
 // Calcula 1º derivada de f(x)
 
-long int ulp(double newton_x_new, double secante_x_new);
+long int ulp(double x, double y);
+// Calcula a quantidade de ulp entre
 
 #endif 

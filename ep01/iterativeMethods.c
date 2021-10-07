@@ -3,18 +3,21 @@
 
 #include "functions.h"
 
+// x_{i+1} = x - ( f(x_i)/f'(x_i) )
 double phiNewton(double x, char *f) {
+
     double derivative = dfx(x, f);
-    double result = (x - (fx(x, f)) / derivative ); // x_{i+1} = x - ( f(x_i)/f'(x_i) )
+    double result = (x - (fx(x, f)) / derivative ); 
     
     return result;
 }   
 
-double phiSecante(double x, double xOld , char *f) {
+// x_{i+1} = x_i - ( f(x_i)*(x_i - x_{i-1}) / f(x_i) - f(x_{i-1}) )
+double phiSecante(double x, double x_old , char *f) {
     double res = fx(x, f);
-    double resOld = fx(xOld, f);
+    double res_old = fx(x_old, f);
 
-    return (x - ((res * x) / (res - resOld) - (res * xOld) / (res - resOld))); // x_{i+1} = x_i - ( f(x_i)*(x_i - x_{i-1}) / f(x_i) - f(x_{i-1}) )
+    return (x - ((res * x) / (res - res_old) - (res * x_old) / (res - res_old))); 
 }
 
 #endif

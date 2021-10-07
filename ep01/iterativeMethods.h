@@ -4,7 +4,7 @@
 double phiNewton(double x, char *f);
 // Calcula função phi do método newton raphson
 
-double phiSecante(double x, double xOld, char *f);
+double phiSecante(double x, double x_old, char *f);
 // Calcula função phi do método da secante
 
 #endif

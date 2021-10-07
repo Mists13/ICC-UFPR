@@ -22,13 +22,13 @@ double dfx(double x, char *f) {
     return evaluator_evaluate_x(g, x);
 }
 
-long int ulp(double newton_x_new, double secante_x_new) {
-    long int secante_x_new_int, newton_x_new_int;
+long int ulp(double x, double y) {
+    long int x_long_int, y_long_int;
    
-    memcpy(&newton_x_new_int, &newton_x_new, sizeof(newton_x_new));
-    memcpy(&secante_x_new_int, &secante_x_new, sizeof(newton_x_new));
+    memcpy(&x_long_int, &x, sizeof(x));
+    memcpy(&y_long_int, &y, sizeof(y));
    
-    return abs(newton_x_new_int - secante_x_new_int - 1);
+    return abs(x_long_int - y_long_int - 1);
 }
 
 #endif
