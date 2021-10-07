@@ -25,8 +25,8 @@ double dfx(double x, char *f) {
 long int ulp(double x, double y) {
     long int x_long_int, y_long_int;
    
-    memcpy(&x_long_int, &x, sizeof(x));
-    memcpy(&y_long_int, &y, sizeof(y));
+    memcpy(&x_long_int, &x, sizeof(double));
+    memcpy(&y_long_int, &y, sizeof(double));
    
     return abs(x_long_int - y_long_int - 1);
 }

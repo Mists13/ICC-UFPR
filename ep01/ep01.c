@@ -5,44 +5,50 @@
 #include "functions.h"
 
 int main(int argc, char *argv[]) {
-    double newton_x_new, newton_x, secante_x, secante_x_new, secante_x_old;
+    double newton_x_new, newton_x, newton_x_old, secante_x, secante_x_new, secante_x_old;
     double abs_error, relative_error, x_0, epsilon_x;
     double newton_crit, secante_crit;
     int stop_newton, stop_secante, i, max_iter;
     char f[50];
 
     // Le função, aproximição inicial (x_0), epsilon e o máximo de iterações
-    scanf("%[^\n]%*c", f);
+    scanf("%[^\n]%*c", f); // Le atê achar um \n
     scanf("%lf", &x_0);
     scanf("%lf", &epsilon_x);
     scanf("%d", &max_iter);
+
+    secante_x = x_0;
+    newton_x_new = secante_x_new = phiNewton(x_0, x_0, f);
+    if (isnan(secante_x_new) || isinf(secante_x_new)) {
+        printf("\nA derivada da primeira iteração deu 0 ou infinito\n");
+        return 0;
+    }
 
     // printa primeira aproximação - valor de input
     printf("%d, %1.16e, %1.16e, %1.16e, %1.16e, %1.16e, %1.16e, %d\n", 0, x_0, fabs(x_0), x_0, fabs(x_0), 0.0, 0.0, 0);  
 
     // o valor da primeira iteração para o metódo da secante é a primeira do método newton
-    secante_x = x_0;
-    newton_x_new = secante_x_new = phiNewton(x_0, f);     
     newton_crit  = secante_crit = fabs(fx(newton_x_new, f));
     stop_newton = stop_secante = (newton_crit < epsilon_x);
 
     // printa segunda aproximação
     printf("%d, %1.16e, %1.16e, %1.16e, %1.16e, %1.16e, %1.16e, %d\n", 1, newton_x_new, newton_crit, secante_x_new, secante_crit, 0.0, 0.0, 0);
-    for (i = 2; (i <= max_iter) && !(stop_newton && stop_secante); ++i){
-        if (!stop_secante){
+    for (i = 2; (i <= max_iter) && !(stop_newton && stop_secante); ++i) {
+        if (!stop_secante) {
             secante_x_old = secante_x;
             secante_x = secante_x_new;
             secante_x_new = phiSecante(secante_x, secante_x_old, f);
             
-            secante_crit = (secante_x_new != 0.0) ? fabs(1 - (secante_x / secante_x_new)) * 100 : 0;
+            secante_crit = (secante_x_new != 0.0) ? fabs(1 - (secante_x / secante_x_new)) * 100 : fabs(secante_x_old);
             stop_secante = (secante_crit < epsilon_x);
         }
         
         if (!stop_newton) {
-            newton_x = newton_x_new;    
-            newton_x_new = phiNewton(newton_x, f); 
+            newton_x_old = newton_x;
+            newton_x = newton_x_new;
+            newton_x_new = phiNewton(newton_x_old, newton_x, f); 
                    
-            newton_crit = (newton_x_new != 0.0) ? fabs(1 - (newton_x / newton_x_new)) * 100 : 0;
+            newton_crit = (newton_x_new != 0.0) ? fabs(1 - (newton_x / newton_x_new)) * 100 : fabs(newton_x_old);
             stop_newton = (newton_crit < epsilon_x);
         }
 
@@ -53,6 +59,6 @@ int main(int argc, char *argv[]) {
         printf("%1.16e, %1.16e, ", abs_error, relative_error);
         printf("%ld\n", ulp(newton_x_new, secante_x_new));
     }
-    
+
     return 33;
 }

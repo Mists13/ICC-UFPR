@@ -1,0 +1,26 @@
+Luzia Millena Santos Silva, GRR20185174, 	lmss18@inf.ufpr.br
+Matheus Pacheco Santos,     GRR20192786,	mps19@inf.ufpr.br
+
+
+Foi utilizado como critério de parada o seguinte cálculo (erro relativo)
+
+| (1 - (aprox_anterior / aprox_atual ) * 100 |
+
+Pois leva em consideração a magnitude da aproximação anterior para realizar
+o cálculo. Consideramos que o epsilon é dado em porcentagem.
+
+Supondo que o método não oscila quando se aproxima da raiz da função, 
+a aproximação atual e anterior vão ficando mais próximas uma da outra, caso a  
+aproximação anterior seja igual a atual o critério vai dar 0, ocansionando o 
+fim do método. 
+
+Caso a aproximação atual seja igual 0, é usado o valor absoluto da aproximação anterior 
+como critério, para evitar divisao por 0.
+
+Ao calcular  a derivada no método de Newton, caso ocorra uma divisão por zero,
+é retornada a derivada da aproximação anterior. Porém no caso excepcional
+onde derivada da aproximação inicial é 0, o programa aborta relatando 
+o ocorrido.
+
+Nós procuramos efetuar as divisões e mutiplicações antes das adições e subtrações
+para melhor efetividade da acurácia do resultado.
