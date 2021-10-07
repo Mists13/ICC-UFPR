@@ -1,19 +1,26 @@
-    CC     = gcc -g
-    CFLAGS = -I/usr/include
-    LFLAGS = -L/usr/lib  -lm -lmatheval
- 
-	OBJS = ep01.o iterativeMethods.o functions.o
- 
-# regra default (primeira regra)
-all: ep01
- 
-# regras de ligacao
-ep01: $(OBJS) $(LFLAGS)
- 
+CC = gcc -g
+PREFIX = ${HOME}
+LIBDIR = $(PREFIX)/lib
+INCDIR = $(PREFIX)/include
+
+CFLAGS = -Wall -std=c11 -I$(INCDIR)
+LFLAGS = -Wl,-rpath -Wl,$(LIBDIR) -L$(LIBDIR) -lm -lmatheval
+
+PROG = ep01
+OBJS = functions.o \
+		iterativeMethods.o \
+		ep01.o
+
+# regra default
+all: $(PROG)
+
 # regras de compilação
-functions.o: $(CFLAGS) functions.c functions.h
-iterativeMethods.o: $(CFLAGS) functions.o iterativeMethods.c iterativeMethods.h 
-ep01.o: $(CFLAGS) functions.o iterativeMethods.o ep01.c 
+%.o: %.c 
+	$(CC) -c $(CFLAGS) $<
+
+# regras de ligação
+$(PROG): % : $(OBJS) %.o
+	$(CC) -o $@ $^ $(LFLAGS) 
 
 # remove arquivos temporários
 clean:
@@ -21,4 +28,4 @@ clean:
  
 # remove tudo o que não for o código-fonte
 purge: clean
-	-rm -f ep01
+	-rm -f $(PROG)
