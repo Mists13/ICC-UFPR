@@ -17,10 +17,11 @@ double phiNewton(double x_old, double x, char *f) {
 
 // x_{i+1} = x_i - ( (f(x_i)*(x_i - x_{i-1})) / (f(x_i) - f(x_{i-1})) )
 double phiSecante(double x, double x_old , char *f) {
-    double res = fx(x, f);
-    double res_old = fx(x_old, f);
+    double fx_i = fx(x, f);
+    double fx_i_old = fx(x_old, f);
+    double divisor = (fx_i - fx_i_old);
 
-    return (x - ((res * x) / (res - res_old) - (res * x_old) / (res - res_old))); 
+    return (x - ((fx_i * x) / divisor - (fx_i * x_old) / divisor)); 
 }
 
 #endif

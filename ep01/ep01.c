@@ -17,6 +17,11 @@ int main(int argc, char *argv[]) {
     scanf("%lf", &epsilon_x);
     scanf("%d", &max_iter);
 
+    // printa primeira aproximação - valor de input
+    printf("%d, %1.16e, %1.16e, %1.16e, %1.16e, %1.16e, %1.16e, %d\n", 
+            0, x_0, fabs(x_0), x_0, fabs(x_0), 0.0, 0.0, 0);
+
+    // o valor da primeira iteração para o metódo da secante é a primeira do método newton
     secante_x = x_0;
     newton_x_new = secante_x_new = phiNewton(x_0, x_0, f);
     if (isnan(secante_x_new) || isinf(secante_x_new)) {
@@ -24,15 +29,15 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    // printa primeira aproximação - valor de input
-    printf("%d, %1.16e, %1.16e, %1.16e, %1.16e, %1.16e, %1.16e, %d\n", 0, x_0, fabs(x_0), x_0, fabs(x_0), 0.0, 0.0, 0);  
-
-    // o valor da primeira iteração para o metódo da secante é a primeira do método newton
+    // o valor da funcao na raiz estimada é o primeiro criteiro de parada
+    // pois nao ha uma aprox. anterior para calcular o erro relativo caso a derivada seja 0 
     newton_crit  = secante_crit = fabs(fx(newton_x_new, f));
     stop_newton = stop_secante = (newton_crit < epsilon_x);
 
     // printa segunda aproximação
-    printf("%d, %1.16e, %1.16e, %1.16e, %1.16e, %1.16e, %1.16e, %d\n", 1, newton_x_new, newton_crit, secante_x_new, secante_crit, 0.0, 0.0, 0);
+    printf("%d, %1.16e, %1.16e, %1.16e, %1.16e, %1.16e, %1.16e, %d\n",
+            1, newton_x_new, newton_crit, secante_x_new, secante_crit, 0.0, 0.0, 0);
+
     for (i = 2; (i <= max_iter) && !(stop_newton && stop_secante); ++i) {
         if (!stop_secante) {
             secante_x_old = secante_x;
@@ -55,9 +60,9 @@ int main(int argc, char *argv[]) {
         abs_error = newton_x_new - secante_x_new;
         relative_error = fabs(abs_error / newton_x_new);
         
-        printf("%d, %1.16e, %1.16e, %1.16e, %1.16e, ", i, newton_x_new, newton_crit, secante_x_new, secante_crit);
-        printf("%1.16e, %1.16e, ", abs_error, relative_error);
-        printf("%ld\n", ulp(newton_x_new, secante_x_new));
+        printf("%d, %1.16e, %1.16e, %1.16e, %1.16e, %1.16e, %1.16e, %ld\n",
+                i, newton_x_new, newton_crit, secante_x_new, secante_crit, abs_error,
+                relative_error, ulp(newton_x_new, secante_x_new));
     }
 
     return 33;
