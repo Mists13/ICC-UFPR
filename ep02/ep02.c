@@ -14,45 +14,67 @@ double fx(double x, char *f) {
     return result;
 }
 
-void generateLinearSystem(char functions[MAX_STR][50], int n, int k){
+double *solveLinearSystem(double diagonalsMatrix[MAX_STR][50], int k, int n, int mainDiagIndex){
 
-    double upperDiagonals[k];                                   // diagonal size is maximum k 
-    double bottomDiagonals[k];
-    double mainDiagonal[k];
-    int mainDiag = k/2;
-    int thisDiagSize = 0;
-
-    // generate upper diagonals 
-    for(int i = 0; i < mainDiag; i++){                       
-        thisDiagSize = n - (mainDiag - i);               
-        for(int j = 0; j < thisDiagSize ; j++)               // for each function, generates array of diagonal
-            upperDiagonals[j] = fx(j, functions[i]);
-            putchar('\n');
-    }   
-
-    // generate bottom diagonals
-    thisDiagSize++;
-    for(int i = mainDiag; i < k ; i++){    
-
-        if (thisDiagSize  == n ){                           // main diagonal
-            for(int j = 0; j < thisDiagSize; j++)                  
-            mainDiagonal[j] = fx(j, functions[i]);
-            putchar('\n');
-        } else {   
-        for(int j = 0; j < thisDiagSize ; j++)                  // for each function, generates array of diagonal
-            bottomDiagonals[j] = fx(j, functions[i]);
-            putchar('\n');
-        }
-        thisDiagSize--;
-    }                
+    double *xValuesArray;
+    double *results;
+    int u, b = 0;
 
 
-    /*
-        GERAR TERMOS INDEPENTENTES
-    */
+    // // para cada linha da matriz de diagonais
+    // for(int i = 0; i < n-1; i++){   
+    //     xValuesArray[i] = diagonalsMatrix[k][i];        // termo inpendente na ultima linha da matriz        
+
+    //     for(int j = 0; j < k; j++){                 
+    //         xValuesArray[i] =- diagonalsMatrix[j][i]      
+    //     }
+        
 
 }
 
+
+
+void generateLinearSystem(char functions[MAX_STR][50], int n, int k){
+
+    double diagonalsMatrix[k+1][n+1];                                   // diagonal size is maximum k 
+    int mainDiagIndex = k/2;
+    int thisDiagSize = 0;
+    int atBottomDiag = 0;
+    
+    // for each diagonal, generates an array using functions
+    for(int i = 0; i < k; i++){   
+
+        if (thisDiagSize  == n ){                                  // main diagonal
+
+            for(int j = 0; j < thisDiagSize; j++)                  
+                diagonalsMatrix[i][j] = fx(j, functions[i]);
+            putchar('\n');
+            atBottomDiag = 1;
+            thisDiagSize--;
+
+        }else if ( atBottomDiag ){
+
+            for(int j = 0; j < thisDiagSize ; j++)            // bottom diagonal
+                diagonalsMatrix[i][j] = fx(j, functions[i]);
+            putchar('\n');            
+            thisDiagSize--;
+
+        } else {   
+
+            thisDiagSize = n - (mainDiagIndex - i);               
+            for(int j = 0; j < thisDiagSize ; j++)               // upper diagonal
+                diagonalsMatrix[i][j] = fx(j, functions[i]);
+            putchar('\n');
+            thisDiagSize++;
+            
+        }
+    }   
+        
+    // generate independent terms
+    for(int j = 0; j < n ; j++)              
+        diagonalsMatrix[k][j] = fx(j, functions[k]);
+
+}
 
 
 int main() {
@@ -66,11 +88,13 @@ int main() {
         scanf("%[^\n]%*c", functions[i]);
         printf (" function[%d] : %s\n", i, functions[i]);
     }
+    
     // Dimension (n) and diagonal amount (k) of linear system
     printf("Type n and k");
     scanf("%d", &n);
     scanf("%d", &k);
-
+    
     generateLinearSystem(functions, n, k);
+    
     
 } 
