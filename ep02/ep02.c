@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <matheval.h>
 
-#define MAX_STR 5
+#define MAX_STR 6
 
 double fx(double x, char *f) {
     void *g = evaluator_create(f);
@@ -71,7 +71,6 @@ int main() {
     scanf("%d", &n);
     scanf("%d", &k);
 
-    scanf("%[^\n]%*c", independentTerms);
     generateLinearSystem(functions, n, k);
     
 } 
