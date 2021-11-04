@@ -48,68 +48,6 @@ double fx(double x, char *f) {
     return result;
 }
 
-// double *solveLinearSystem(double diagonalsMatrix[MAX_STR][50], int k, int n, int mainDiagIndex){
-
-//     double *xValuesArray;
-//     double *results;
-//     int u, b = 0;
-
-
-//     // // para cada linha da matriz de diagonais
-//     // for(int i = 0; i < n-1; i++){   
-//     //     xValuesArray[i] = diagonalsMatrix[k][i];        // termo inpendente na ultima linha da matriz        
-
-//     //     for(int j = 0; j < k; j++){                 
-//     //         xValuesArray[i] =- diagonalsMatrix[j][i]      
-//     //     }
-        
-
-// }
-
-
-
-// void generateLinearSystem(char functions[MAX_STR][50], int n, int k){
-
-//     double diagonalsMatrix[k+1][n+1];                                   // diagonal size is maximum k 
-//     int mainDiagIndex = k/2;
-//     int thisDiagSize = 0;
-//     int atBottomDiag = 0;
-    
-//     // for each diagonal, generates an array using functions
-//     for(int i = 0; i < k; i++){   
-
-//         if (thisDiagSize  == n ){                                  // main diagonal
-
-//             for(int j = 0; j < thisDiagSize; j++)                  
-//                 diagonalsMatrix[i][j] = fx(j, functions[i]);
-//             putchar('\n');
-//             atBottomDiag = 1;
-//             thisDiagSize--;
-
-//         }else if ( atBottomDiag ){
-
-//             for(int j = 0; j < thisDiagSize ; j++)            // bottom diagonal
-//                 diagonalsMatrix[i][j] = fx(j, functions[i]);
-//             putchar('\n');            
-//             thisDiagSize--;
-
-//         } else {   
-
-//             thisDiagSize = n - (mainDiagIndex - i);               
-//             for(int j = 0; j < thisDiagSize ; j++)               // upper diagonal
-//                 diagonalsMatrix[i][j] = fx(j, functions[i]);
-//             putchar('\n');
-//             thisDiagSize++;
-            
-//         }
-//     }   
-        
-//     // generate independent terms
-//     for(int j = 0; j < n ; j++)              
-//         diagonalsMatrix[k][j] = fx(j, functions[k]);
-
-// }
-
 
 void printaSistema(double **mat, double *b, int dimensao, int k) {
     int q = (k - 1) / 2;
@@ -145,8 +83,10 @@ void printaSistema(double **mat, double *b, int dimensao, int k) {
     printf("\n-------\n");
 }
 
-void resolveSistemaLinear(double **mat, double *x, double*b, int dimensao) {
-    double *y = calloc(dimensao, sizeof(double));
+/* Resolve sistema linear atraves do metodo de Gauss Seidel */
+void resolveSistemaLinear(double **mat, double *xAnterior, double*b, int dimensao, double epsilon, int maxIteracoes) {
+    
+    double *xAtual = calloc(dimensao, sizeof(double));
     double *errosAbsolutos = calloc(dimensao, sizeof(double));
     double max;
     int k = 0;
@@ -156,31 +96,35 @@ void resolveSistemaLinear(double **mat, double *x, double*b, int dimensao) {
         for (int i = 0; i < dimensao; i++)
         {
 
-            y[i] = b[i];
+            // Calcula os valores depois da diagonal principal
+            xAtual[i] = b[i];
             for (int j = i+1; j < dimensao; j++) {
-                y[i] -=  x[j] * mat[i][j];
+                xAtual[i] -=  xAnterior[j] * mat[i][j];             
             }
             
+            // Calcula os valores antes da diagonal principal
             for (int j = i-1; j >= 0; j--) {
-                y[i] -=  x[j] * mat[i][j];
+                xAtual[i] -=  xAnterior[j] * mat[i][j];
             }
 
-            y[i] /= mat[i][i];
-            errosAbsolutos[i] = fabs(y[i] - x[i]);
+            xAtual[i] /= mat[i][i];
+            errosAbsolutos[i] = fabs(xAtual[i] - xAnterior[i]);
 
-            x[i] = y[i];
+            xAnterior[i] = xAtual[i];
         }
 
         max = errosAbsolutos[0];
-        for (int l = 1; l < dimensao; l++)
+        // Calcula o maior erro absoluto obtido na iteracao
+        for (int l = 1; l < dimensao; l++)                        
         {
             if (max < errosAbsolutos[l]) {
                 max = errosAbsolutos[l];
             }
         }
-    } while (max > 0.0001 && k < 50);
+    } while (max > epsilon && k < maxIteracoes);
 }
 
+/* Gera matriz a partir de funcoes que representam cada diagonal do sistema linear */
 void geraSistemaLinear(double **mat, double *b, char **functions, int dimensao, int k) {
     int q = (k - 1) / 2;
 
@@ -203,9 +147,9 @@ void geraSistemaLinear(double **mat, double *b, char **functions, int dimensao, 
 
 int main() {
     double tempo = timestamp();
-    int n, k, i, end;
+    int n, k, i, end, maxIteracoes;
     char **functions;
-    double **mat, *x, *b;
+    double **mat, *x, *b, epsilon;
 
     // Lê a dimensão da matriz e valor k-diagonal
     scanf("%d", &n);
@@ -223,8 +167,12 @@ int main() {
         scanf("%s", functions[i]);
     }
 
+    // Lê a epsilon e maximo de iteracoes
+    scanf("%lf", &epsilon);
+    scanf("%d", &maxIteracoes);
+
     geraSistemaLinear(mat, b, functions, n, k);    
-    resolveSistemaLinear(mat, x, b, n);
+    resolveSistemaLinear(mat, x, b, n, epsilon, maxIteracoes);
 
     printf("solução: ");
     for (i = 0; i < n; i++)
