@@ -2,86 +2,9 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
-#include <matheval.h>
 #include "utils.h"
 
 #define MAX_FUNCTION 20
-
-double **alocaMatrizDoubles(int lin, int col) {
-    double **mat;
-    int i;
-
-    // aloca um vetor de LIN ponteiros para linhas
-    mat = malloc (lin * sizeof (double*)) ;
-    
-    // aloca um vetor com todos os elementos da matriz
-    mat[0] = calloc (lin * col, sizeof (double));
-    
-    // ajusta os demais ponteiros de linhas (i > 0)
-    for (i=1; i < lin; i++)
-        mat[i] = mat[0] + i * col ;
-
-    return mat;
-}
-
-char **alocaMatrizChars(int lin, int col) {
-    char **mat ;
-    int i, j ;
-    
-    // aloca um vetor de LIN ponteiros para linhas
-    mat = malloc (lin * sizeof (char*));
-    
-    // aloca um vetor com todos os elementos da matriz
-    mat[0] = malloc (lin * col * sizeof (char));
-    
-    // ajusta os demais ponteiros de linhas (i > 0)
-    for (i=1; i < lin; i++)
-        mat[i] = mat[0] + i * col;
-
-    return mat;
-}
-
-double fx(double x, char *f) {
-    void *g = evaluator_create(f);
-    
-    double result = evaluator_evaluate_x(g, x);
-    return result;
-}
-
-
-void printaSistema(double **mat, double *b, int dimensao, int k) {
-    int q = (k - 1) / 2;
-    
-    // Printa diagonais superiores
-    for (int i = q; i >= 1; i--) {
-        for (int j = i, l = 0; (j < dimensao); j++, l++) {
-            printf("%lf ", mat[l][j]);
-        }
-        printf("\n");
-    }
-
-    // Printa diagonal principal
-    for (int i = 0; i < dimensao; i++)
-    {
-        printf("%lf ", mat[i][i]);
-    }
-    printf("\n");
-
-    // Printa diagonal inferior
-    for (int i = 1; i <= q; i++) {
-        for (int j = i, l = 0; (j < dimensao); j++, l++) {
-            printf("%lf ", mat[j][l]);
-        }
-        printf("\n");
-    }
-
-    // Printa termos independentes
-    for (int i = 0; i < dimensao; i++)
-    {
-        printf("%lf ", b[i]);
-    }
-    printf("\n-------\n");
-}
 
 /* Resolve sistema linear atraves do metodo de Gauss Seidel */
 void resolveSistemaLinear(double **mat, double *xAnterior, double*b, int dimensao, double epsilon, int maxIteracoes) {
@@ -146,7 +69,7 @@ void geraSistemaLinear(double **mat, double *b, char **functions, int dimensao, 
 }
 
 int main() {
-    double tempo = timestamp();
+
     int n, k, i, end, maxIteracoes;
     char **functions;
     double **mat, *x, *b, epsilon;
@@ -171,16 +94,19 @@ int main() {
     scanf("%lf", &epsilon);
     scanf("%d", &maxIteracoes);
 
-    geraSistemaLinear(mat, b, functions, n, k);    
+    geraSistemaLinear(mat, b, functions, n, k);  
+
+    double tempo = timestamp();  
     resolveSistemaLinear(mat, x, b, n, epsilon, maxIteracoes);
 
+    tempo = timestamp() - tempo;
     printf("solução: ");
     for (i = 0; i < n; i++)
     {
         printf("%lf ", x[i]);
     }
     printf("\n");
+    printf("tempo: %lf\n", tempo);
 
-    printf("tempo: %lf\n", timestamp() - tempo);
     return 33;
 }

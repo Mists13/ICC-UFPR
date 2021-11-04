@@ -16,5 +16,13 @@
 
 double timestamp(void);
 
+double **alocaMatrizDoubles(int lin, int col);
+
+char **alocaMatrizChars(int lin, int col);
+
+void printaSistema(double **mat, double *b, int dimensao, int k);
+
+double fx(double x, char *f);
+
 #endif // __UTILS_H__
 

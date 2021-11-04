@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <matheval.h>
 #include "utils.h"
 
 /*  Retorna tempo em milisegundos
@@ -16,4 +18,80 @@ double timestamp(void)
   gettimeofday(&tp, NULL);
   return((double)(tp.tv_sec*1000.0 + tp.tv_usec/1000.0));
 }
+
+double **alocaMatrizDoubles(int lin, int col) {
+    double **mat;
+    int i;
+
+    // aloca um vetor de LIN ponteiros para linhas
+    mat = malloc (lin * sizeof (double*)) ;
+    
+    // aloca um vetor com todos os elementos da matriz
+    mat[0] = calloc (lin * col, sizeof (double));
+    
+    // ajusta os demais ponteiros de linhas (i > 0)
+    for (i=1; i < lin; i++)
+        mat[i] = mat[0] + i * col ;
+
+    return mat;
+}
+
+void printaSistema(double **mat, double *b, int dimensao, int k) {
+    int q = (k - 1) / 2;
+    
+    // Printa diagonais superiores
+    for (int i = q; i >= 1; i--) {
+        for (int j = i, l = 0; (j < dimensao); j++, l++) {
+            printf("%lf ", mat[l][j]);
+        }
+        printf("\n");
+    }
+
+    // Printa diagonal principal
+    for (int i = 0; i < dimensao; i++)
+    {
+        printf("%lf ", mat[i][i]);
+    }
+    printf("\n");
+
+    // Printa diagonal inferior
+    for (int i = 1; i <= q; i++) {
+        for (int j = i, l = 0; (j < dimensao); j++, l++) {
+            printf("%lf ", mat[j][l]);
+        }
+        printf("\n");
+    }
+
+    // Printa termos independentes
+    for (int i = 0; i < dimensao; i++)
+    {
+        printf("%lf ", b[i]);
+    }
+    printf("\n-------\n");
+}
+
+char **alocaMatrizChars(int lin, int col) {
+    char **mat ;
+    int i, j ;
+    
+    // aloca um vetor de LIN ponteiros para linhas
+    mat = malloc (lin * sizeof (char*));
+    
+    // aloca um vetor com todos os elementos da matriz
+    mat[0] = malloc (lin * col * sizeof (char));
+    
+    // ajusta os demais ponteiros de linhas (i > 0)
+    for (i=1; i < lin; i++)
+        mat[i] = mat[0] + i * col;
+
+    return mat;
+}
+
+double fx(double x, char *f) {
+    void *g = evaluator_create(f);
+    
+    double result = evaluator_evaluate_x(g, x);
+    return result;
+}
+
 
