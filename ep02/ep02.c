@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include "utils.h"
 
-#define MAX_FUNCTION 20
+#define MAX_NUM_FUNCTION 20
 
 /* Resolve sistema linear atraves do metodo de Gauss Seidel */
 void resolveSistemaLinear(double **mat, double *xAnterior, double*b, int dimensao, double epsilon, int maxIteracoes) {
@@ -15,17 +15,17 @@ void resolveSistemaLinear(double **mat, double *xAnterior, double*b, int dimensa
     int k = 0;
 
     do {
-        k++;
+        ++k;
         for (int i = 0; i < dimensao; i++)
         {
 
-            // Calcula os valores depois da diagonal principal
+            // Calcula os valores depois da diagonal principal (passa pro outro lada da equação mudando o sinal)
             xAtual[i] = b[i];
             for (int j = i+1; j < dimensao; j++) {
                 xAtual[i] -=  xAnterior[j] * mat[i][j];             
             }
             
-            // Calcula os valores antes da diagonal principal
+            // Calcula os valores antes da diagonal principal (passa pro outro lada da equação mudando o sinal)
             for (int j = i-1; j >= 0; j--) {
                 xAtual[i] -=  xAnterior[j] * mat[i][j];
             }
@@ -70,17 +70,17 @@ void geraSistemaLinear(double **mat, double *b, char **functions, int dimensao, 
 
 int main() {
 
-    int n, k, i, end, maxIteracoes;
+    int n, k, i, maxIteracoes;
     char **functions;
-    double **mat, *x, *b, epsilon;
+    double **mat, *x, *b, epsilon, tempo;
 
-    // Lê a dimensão da matriz e valor k-diagonal
+    // Lê a dimensão da matriz (n) e valor k-diagonal
     scanf("%d", &n);
     scanf("%d", &k);
     
-    // Aloca matriz de coeficientes, vetor de variaveis x, vetor de termo independentes  e vetor de funções
+    // Aloca matriz de coeficientes, vetor de variaveis x, vetor de termo independentes (b)  e vetor de funções
     // Os valores iniciais da matriz e vetores são zeros
-    functions = alocaMatrizChars(n, MAX_FUNCTION);
+    functions = alocaMatrizChars(n, MAX_NUM_FUNCTION);
     mat = alocaMatrizDoubles(n, n);
     x = calloc(n, sizeof(double));
     b = calloc(n, sizeof(double));
@@ -96,10 +96,11 @@ int main() {
 
     geraSistemaLinear(mat, b, functions, n, k);  
 
-    double tempo = timestamp();  
+    // Resolve o sistema linear através do método Gauss-Seidel e calcula o tempo de execução
+    tempo = timestamp();  
     resolveSistemaLinear(mat, x, b, n, epsilon, maxIteracoes);
-
     tempo = timestamp() - tempo;
+
     printf("solução: ");
     for (i = 0; i < n; i++)
     {
