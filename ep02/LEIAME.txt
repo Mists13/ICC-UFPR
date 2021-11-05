@@ -1,0 +1,16 @@
+EP02
+
+Luzia Millena Santos Silva, GRR20185174, 	lmss18@inf.ufpr.br
+Matheus Pacheco Santos,     GRR20192786,	mps19@inf.ufpr.br
+
+Função geraSistemaLinear:
+
+Para gerar o sistema linear foi criada uma matriz completa preenchendo cada diagonal conforme as funções dadas. 
+Foram preenchidas, num mesmo laço, as diagonais superiores e inferiores à diagonal principal usando o valor "q" de uma matriz de banda k diagonal.
+E após isso foi gerada a diagonal principal e o vetor de termos independentes.
+
+Função resolveSistemaLinear:
+
+A partir da matriz gerada, o sistema foi resolvido através de uma aplicação do Gauss-Sidel simplista. 
+Para fazer a comparação com o epsilon, definido na entrada padrão, como um critério de parada, 
+foi calculado o maior entre os erros absolutos de valores de x (x0, x1 .. xn-1) de uma iteração para outra.
