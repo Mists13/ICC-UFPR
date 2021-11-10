@@ -1,16 +1,15 @@
 typedef struct
 {
-    int dimensao;
-    int maxIteracoes;
+    int numFuncoes;
+    int tamFuncoes;
     char **funcoes;
-    char ***matDerivParcial;
-    double *aproxInicial;
-    double epsilon;
 } SistemaNaoLinear;
 
-/* Faz com que sistema.funcoes, sistema.matDerivParcial e sistema.aproxInicial apontem para NULL */
-void inicializaSistemaNaoLinear(SistemaNaoLinear *sistema);
+/* Faz com que sistema.funcoes apontem para NULL
+ * Retorna 0 se houve sucesso, caso contrário retorna -1 */
+int inicializaSistemaNaoLinear(SistemaNaoLinear *sistema, int numFuncoes, int tamFuncoes);
 
-/* Usa a função free em  sistema.funcoes, sistema.matDerivParcial e sistema.aproxInicial - nos três *
- * casos testa se foi alocado antes de limpar                                                       */
+/* Libera memória alocada dinâmicamente */
 void finalizaSistemaNaoLinear(SistemaNaoLinear *sistema);
+
+int geraMatDerivParcial(char ****matDerivParcial, SistemaNaoLinear sistema);
