@@ -8,6 +8,8 @@ LFLAGS = -Wl,-rpath -Wl,$(LIBDIR) -L$(LIBDIR) -lmatheval
 
 PROG = trabalho1
 OBJS = utils.o \
+	   alloc.o \
+	   sistemas.o \
 	   functions.o \
 	   trabalho1.o
 

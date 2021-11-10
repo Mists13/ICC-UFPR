@@ -16,9 +16,7 @@
 
 double timestamp(void);
 
-double **alocaMatrizDoubles(int lin, int col);
 
-char **alocaMatrizChars(int lin, int col);
 
 double fx(double x, char *f);
 
