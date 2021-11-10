@@ -54,17 +54,17 @@ char **alocaMatrizChars(int lin, int col) {
     return mat;
 }
 
-/* Executa funcao  para um valor de x */
-double fx(double x, char *f) {
-    void *g = evaluator_create(f);
+// /* Executa funcao  para um valor de x */
+// double fx(double x, char *f) {
+//     void *g = evaluator_create(f);
     
-    double result = evaluator_evaluate_x(g, x);
-    return result;
-}
+//     double result = evaluator_evaluate_x(g, x);
+//     return result;
+// }
 
-double dx(double x, char *f) {
-    void *g = evaluator_create(f);
+// double dx(double x, char *f) {
+//     void *g = evaluator_create(f);
     
-    double result = evaluator_evaluate_x(g, x);
-    return result;
-}
+//     double result = evaluator_evaluate_x(g, x);
+//     return result;
+// }
