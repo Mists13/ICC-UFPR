@@ -37,6 +37,7 @@ int main() {
         scanf("%*c"); // Limpa a linha - consome todos os '\n's
 
         geraMatDerivParcial(&matDerivParcial, sistema);
+        resolveSistemaNaoLinear(sistema, matDerivParcial, aproxiIni, epsilon, maxIteracoes);
 
         // Limpa memória alocada
         freeMatrizStrings(&matDerivParcial, sistema.numFuncoes, sistema.numFuncoes);

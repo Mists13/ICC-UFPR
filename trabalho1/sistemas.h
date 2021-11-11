@@ -13,3 +13,6 @@ int inicializaSistemaNaoLinear(SistemaNaoLinear *sistema, int numFuncoes, int ta
 void finalizaSistemaNaoLinear(SistemaNaoLinear *sistema);
 
 int geraMatDerivParcial(char ****matDerivParcial, SistemaNaoLinear sistema);
+
+double resolveSistemaNaoLinear(SistemaNaoLinear sistema, char ****matDerivParcial,
+                             double *aproxInicial, double epsilon, int maxIteracoes);
