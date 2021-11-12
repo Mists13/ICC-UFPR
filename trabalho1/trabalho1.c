@@ -9,7 +9,16 @@
 
 #define MAX 50
 
-int main() {
+int main(int argc, char *argv[]){
+    FILE *arq;
+    FILE *saida = stdin;
+
+    if (argc > 2 && strcmp(argv[1],"-o") == 0){
+        arq = fopen(argv[2],"w");
+        fprintf(arq, "teste");
+        saida = arq;
+    }
+
     double epsilon, *aproxiIni, tempo;
     void **funcoes, ***matDerivadas;
     int i, maxIteracoes, numFuncoes;
