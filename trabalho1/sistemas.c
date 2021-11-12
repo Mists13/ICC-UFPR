@@ -22,6 +22,10 @@ void finalizaSistemaNaoLinear(SistemaNaoLinear *sistema) {
     free(sistema->funcoes);
 }
 
+void inicializaMatQuad(MatrizQuadrada *mat, double ***coeficientes, double **termosLivres) {
+
+}
+
 int geraMatDerivParcial(void ****mat, SistemaNaoLinear sistema) {
     char var[MAX];
 
@@ -72,52 +76,53 @@ int econtraMaxPivo(double **mat, int j, int n) {
     return indiceMax;
 }
 
-void trocaLinhaMat(double ***mat, double **b, int i, int pivo) {
-    double *x = (*mat)[i];
-    (*mat)[i] = (*mat)[pivo];
-    (*mat)[pivo] = x;
+void trocaLinhaMat(MatrizQuadrada *mat, int i, int pivo) {
+    double *x = mat->coeficientes[i];
+    mat->coeficientes[i] = mat->coeficientes[pivo];
+    mat->coeficientes[pivo] = x;
 
-    double y = (*b)[i];
-    (*b)[i] = (*b)[pivo];
-    (*b)[pivo] = y;
+    double y = mat->termosLivres[i];
+    mat->termosLivres[i] = mat->termosLivres[pivo];
+    mat->termosLivres[pivo] = y;
 }
 
-void retrossubs(double **mat, double *b, double **x, int n) {
-    for (int i = n-1; i >= 0; --i) {
-        (*x)[i] = b[i];
-        for (int j = i + 1; j < n; ++j) {
-            (*x)[i] -= mat[i][j] * (*x)[j];
+void retrossubs(MatrizQuadrada *mat, double **x) {
+    for (int i = mat->dimensao-1; i >= 0; --i) {
+        (*x)[i] = mat->termosLivres[i];
+        for (int j = i + 1; j < mat->dimensao; ++j) {
+            (*x)[i] -= mat->coeficientes[i][j] * (*x)[j];
         }
-        (*x)[i] /= mat[i][i];
+        (*x)[i] /= mat->coeficientes[i][i];
     }
 }
 
-void eliminacaoGaussJordan(double ***mat, double **b, int n) {
+void eliminacaoGaussJordan(MatrizQuadrada *mat) {
     int pivo;
 
-    for (int i = 0; i < n; ++i) {
-        pivo = econtraMaxPivo((*mat), i, n);
+    for (int i = 0; i < mat->dimensao; ++i) {
+        pivo = econtraMaxPivo(mat->coeficientes, i, mat->dimensao);
         if (i != pivo) {
-            trocaLinhaMat(mat, b, i, pivo);
+            trocaLinhaMat(mat, i, pivo);
         }
 
-        for (int j = i+1; j < n; ++j) {
-            double m = (*mat)[j][i] / (*mat)[i][i];
-            (*mat)[j][i] = 0.0;
+        for (int j = i+1; j < mat->dimensao; ++j) {
+            double m = mat->coeficientes[j][i] / mat->coeficientes[i][i];
+            mat->coeficientes[j][i] = 0.0;
 
-            for (int k = i+1; k < n; ++k) {
-                (*mat)[j][k] -= (*mat)[i][k] * m;
+            for (int k = i+1; k < mat->dimensao; ++k) {
+                mat->coeficientes[j][k] -= mat->coeficientes[i][k] * m;
             }
-            (*b)[j] = (*b)[j] - (*b)[i] * m;
+            (mat->termosLivres)[j] = (mat->termosLivres)[j] - (mat->termosLivres)[i] * m;
         }
     }
 }
 
 int metodoNewtonSistemaNaoLinear(SistemaNaoLinear sistema, void ***matDerivParcial,
         double *aproxInicial, double epsilon, int maxIteracoes) {
-    double *deltaX, *xAtuais, normaFuncoes, *termosLivres, **matrizJacobiana;
+    double *deltaX, *xAtuais, *xProx, normaFuncoes, *termosLivres, **matrizJacobiana;
     char **names;
     int count;
+    MatrizQuadrada *matrizQuadrada;
 
     termosLivres = malloc(sizeof(double) * sistema.numFuncoes);
     if (termosLivres == NULL) {
@@ -148,19 +153,28 @@ int metodoNewtonSistemaNaoLinear(SistemaNaoLinear sistema, void ***matDerivParci
         // Verifica se funcoes nos pontos estao prox. de epsilon
         if (normaFuncoes < epsilon ) 
             return xAtuais[i];
-        
-        calculaMatrizJacobiana(matDerivParcial, &matrizJacobiana, sistema.numFuncoes, xAtuais);
-        eliminacaoGaussJordan(&matrizJacobiana, &termosLivres, sistema.numFuncoes);
-        retrossubs(matrizJacobiana, termosLivres, &deltaX, sistema.numFuncoes);
 
-        for(int i = 0; i < sistema.numFuncoes; i++) {
-            printf("# x%d: %lf\n", i + 1, xAtuais[i] + deltaX[i]);
-        }
-        // for (int i = 0; i < sistema.tamFuncoes; i++){
-        //     xAtual[i] = xAnteriores[i] + deltaX[i]; 
+        calculaMatrizJacobiana(matDerivParcial, &matrizJacobiana, sistema.numFuncoes, xAtuais);
+        matrizQuadrada->coeficientes = matrizJacobiana;
+        matrizQuadrada->dimensao = sistema.numFuncoes;
+        matrizQuadrada->termosLivres = termosLivres;
+        eliminacaoGaussJordan(matrizQuadrada);
+        retrossubs(matrizQuadrada,  &deltaX);
+
+        // Encontra proximas aprximacoes ( X[i+1])
+        // for (int i = 0; i < sistema.numFuncoes; i++){
+        //     xProx[i] = xAtuais[i] + deltaX[i]; 
         // }
-        // if ( normaDeltaX() < epsilon ) 
-        //     return xAtual;
+
+        // maxDeltaX = fabs(deltaX[0]);
+        // // Calcula o maior valor de Delta obtido na iteracao
+        // for (int l = 1; l < sistema.numFuncoes; l++){
+        //     if (maxDeltaX > fabs(deltaX[l])){
+        //         maxDeltaX = fabs(deltaX[l]);
+        //     }
+        // }
+        // if ( maxDeltaX < epsilon ) 
+        //     return xProx;
     }
 
     return 0;
