@@ -71,6 +71,30 @@ int alocaMatrizStrings(int lin, int col, char ****mat) {
     return 0;
 }
 
+int alocaMatrizPonteirosVoids(int lin, int col, void ****mat) {
+    int i, j;
+    
+    // aloca um vetor de lin ponteiros para linhas
+    (*mat) = malloc (lin * sizeof (void**));
+    
+    // aloca um vetor com todos os voids* da matriz
+    (*mat)[0] = malloc (lin * col * sizeof (void*));
+    
+    // ajusta os demais ponteiros de linhas (i > 0)
+    for (i = 1; i < lin; i++)
+        (*mat)[i] = (*mat)[0] + i * col;
+
+    // inicialmente os voids* são nulas
+    for (i = 0; i < lin; i++)
+    {
+        for (j = 0; j < col; j++) {
+            (*mat)[i][j] = NULL;
+        }
+    }
+
+    return 0;
+}
+
 void freeMatrizChars(char ***mat) {
     free((*mat)[0]);
     free((*mat));

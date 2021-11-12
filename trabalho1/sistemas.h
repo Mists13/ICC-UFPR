@@ -1,18 +1,16 @@
 typedef struct
 {
     int numFuncoes;
-    int tamFuncoes;
-    char **funcoes;
+    void **funcoes;
 } SistemaNaoLinear;
 
 /* Faz com que sistema.funcoes apontem para NULL
  * Retorna 0 se houve sucesso, caso contrário retorna -1 */
-int inicializaSistemaNaoLinear(SistemaNaoLinear *sistema, int numFuncoes, int tamFuncoes);
+int inicializaSistemaNaoLinear(SistemaNaoLinear *sistema, void ***funcoes, int numFuncoes);
 
 /* Libera memória alocada dinâmicamente */
 void finalizaSistemaNaoLinear(SistemaNaoLinear *sistema);
 
-int geraMatDerivParcial(char ****matDerivParcial, SistemaNaoLinear sistema);
+int geraMatDerivParcial(void ****mat, SistemaNaoLinear sistema);
 
-double resolveSistemaNaoLinear(SistemaNaoLinear sistema, char ****matDerivParcial,
-                             double *aproxInicial, double epsilon, int maxIteracoes);
+double resolveSistemaNaoLinear(SistemaNaoLinear sistema, void ***matDerivParcial, double *aproxInicial, double epsilon, int maxIteracoes);

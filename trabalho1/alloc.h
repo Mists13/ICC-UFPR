@@ -19,3 +19,5 @@ void freeMatrizDoubles(double ***mat);
 /* Limpa memória alocada para a matriz mat
  * Recebe como parâmetro a quantidade de linha em lin e coluna em col para liberar a memória alocada para as strings */
 void freeMatrizStrings(char ****mat, int lin, int col);
+
+int alocaMatrizPonteirosVoids(int lin, int col, void ****mat);

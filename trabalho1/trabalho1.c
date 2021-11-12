@@ -5,50 +5,53 @@
 #include "utils.h"
 #include "sistemas.h"
 #include "alloc.h"
+#include "assert.h"
 
 #define MAX 50
 
 int main() {
-    char input[MAX], ***matDerivParcial;
     double epsilon, *aproxiIni, tempo;
+    void **funcoes, ***matDerivadas;
+    int i, maxIteracoes, numFuncoes;
     SistemaNaoLinear sistema;
-    int i, maxIteracoes;
+    char input[MAX];
 
-    while (scanf("%s", input) != EOF){ 
-        inicializaSistemaNaoLinear(&sistema, atoi(input), MAX); // Aloca espaço para o sistema linear de acordo com o número de funções lido no scopo do while
-        aproxiIni = malloc(sizeof(double) * sistema.numFuncoes); // Aloca espaço para o vetor de aproximáções iniciais
-        // printf("%d\n", sistema.numFuncoes);
+    while (scanf("%s", input) != EOF){
+        numFuncoes = atoi(input);
+        funcoes = malloc(sizeof(void *) * numFuncoes);
+        aproxiIni = malloc(sizeof(double) * numFuncoes); 
+        
+        printf("%d\n", numFuncoes);
 
         // Lê as funções
-        for (i = 0; i < sistema.numFuncoes; i++) {
-            scanf("%s", sistema.funcoes[i]);
-            // printf("%s = 0\n", sistema.funcoes[i]);
+        for (i = 0; i < numFuncoes; i++) {
+            scanf("%s", input);
+            funcoes[i] = evaluator_create(input);
+            assert(funcoes[i]);
+            printf("%s = 0\n", evaluator_get_string(funcoes[i]));
         }
+        inicializaSistemaNaoLinear(&sistema, &funcoes, numFuncoes);
 
         // Le as aproximações
-        for (i = 0; i < sistema.numFuncoes; i++) {
+        for (i = 0; i < numFuncoes; i++)
+        {
             scanf("%lf", &aproxiIni[i]);
             getchar(); // Consome caracter espaço
-            // printf("x%d = %lf\n#\n", i + 1, aproxiIni[i]);
         }
 
         scanf("%lf", &epsilon);
         scanf("%d", &maxIteracoes);
         scanf("%*c"); // Limpa a linha - consome todos os '\n's
 
-
         tempo = timestamp();  
-        geraMatDerivParcial(&matDerivParcial, sistema);
+        geraMatDerivParcial(&matDerivadas, sistema);
         tempo = timestamp() - tempo;
+        printf("# Tempo de derivadas: %lf\n", tempo);
 
-        // printf("###########\n");
-        // printf("# Tempo Derivadas %lf\n", tempo);
-        // printf("###########\n");
-
-        resolveSistemaNaoLinear(sistema, &matDerivParcial, aproxiIni, epsilon, maxIteracoes);
+        resolveSistemaNaoLinear(sistema, matDerivadas, aproxiIni, epsilon, maxIteracoes);
 
         // Limpa memória alocada
-        freeMatrizStrings(&matDerivParcial, sistema.numFuncoes, sistema.numFuncoes);
+        // freeMatrizStrings(&matDerivParcial, sistema.numFuncoes, sistema.numFuncoes);
         finalizaSistemaNaoLinear(&sistema);
         free(aproxiIni);
 
