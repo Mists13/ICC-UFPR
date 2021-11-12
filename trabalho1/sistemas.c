@@ -33,7 +33,7 @@ int geraMatDerivParcial(void ****mat, SistemaNaoLinear sistema) {
     {
         for (int j = 0; j < sistema.numFuncoes; j++) {
             sprintf(var,"x%d", j+1); // transforma inteiro em string 
-            (*mat)[i][j] =evaluator_derivative(sistema.funcoes[i], var);
+            (*mat)[i][j] = evaluator_derivative(sistema.funcoes[i], var);
         }
     }
 
@@ -58,7 +58,7 @@ int calculaMatrizJacobiana(void ***matDerivParcial, double ***matJacobiana, int 
     return 0;
 }
 
-int econtraMax(double **mat, int j, int n) {
+int econtraMaxPivo(double **mat, int j, int n) {
     double max = fabs(mat[j][j]);
     int indiceMax = j;
 
@@ -96,7 +96,7 @@ void eliminacaoGaussJordan(double ***mat, double **b, int n) {
     int pivo;
 
     for (int i = 0; i < n; ++i) {
-        pivo = econtraMax((*mat), i, n);
+        pivo = econtraMaxPivo((*mat), i, n);
         if (i != pivo) {
             trocaLinhaMat(mat, b, i, pivo);
         }
@@ -113,15 +113,24 @@ void eliminacaoGaussJordan(double ***mat, double **b, int n) {
     }
 }
 
-double resolveSistemaNaoLinear(SistemaNaoLinear sistema, void ***matDerivParcial,
-                             double *aproxInicial, double epsilon, int maxIteracoes) {
+int metodoNewtonSistemaNaoLinear(SistemaNaoLinear sistema, void ***matDerivParcial,
+        double *aproxInicial, double epsilon, int maxIteracoes) {
     double *deltaX, *xAtuais, normaFuncoes, *termosLivres, **matrizJacobiana;
     char **names;
     int count;
 
-    xAtuais = deltaX = aproxInicial;
     termosLivres = malloc(sizeof(double) * sistema.numFuncoes);
+    if (termosLivres == NULL) {
+        return -1;
+    }
     deltaX = malloc(sizeof(double) * sistema.numFuncoes);
+    if (deltaX == NULL) {
+        free(termosLivres);
+        return -1;
+    }
+    
+    xAtuais = aproxInicial; 
+    (*deltaX) = (*aproxInicial);
     for (int i = 0; i < 1; i++) {
 
         // Defini norma de funções e termos independentes
@@ -154,5 +163,5 @@ double resolveSistemaNaoLinear(SistemaNaoLinear sistema, void ***matDerivParcial
         //     return xAtual;
     }
 
-    return 0.0;
+    return 0;
 }

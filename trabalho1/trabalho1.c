@@ -48,10 +48,9 @@ int main() {
         tempo = timestamp() - tempo;
         printf("# Tempo de derivadas: %lf\n", tempo);
 
-        resolveSistemaNaoLinear(sistema, matDerivadas, aproxiIni, epsilon, maxIteracoes);
+        metodoNewtonSistemaNaoLinear(sistema, matDerivadas, aproxiIni, epsilon, maxIteracoes);
 
         // Limpa memória alocada
-        // freeMatrizStrings(&matDerivParcial, sistema.numFuncoes, sistema.numFuncoes);
         finalizaSistemaNaoLinear(&sistema);
         free(aproxiIni);
 
