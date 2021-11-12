@@ -31,9 +31,9 @@ int geraMatDerivParcial(void ****mat, SistemaNaoLinear sistema) {
 
     for (int i = 0; i < sistema.numFuncoes; i++)
     {
+        sprintf(var,"x%d", i+1); // transforma inteiro em string 
         for (int j = 0; j < sistema.numFuncoes; j++) {
-            sprintf(var,"x%d", j+1); // transforma inteiro em string 
-            (*mat)[i][j] = evaluator_derivative(sistema.funcoes[i], var);
+            (*mat)[j][i] = evaluator_derivative(sistema.funcoes[j], var);
         }
     }
 
