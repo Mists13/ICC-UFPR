@@ -16,9 +16,4 @@
 
 double timestamp(void);
 
-
-
-double fx(double x, char *f);
-
 #endif // __UTILS_H__
-

@@ -10,7 +10,6 @@ PROG = trabalho1
 OBJS = utils.o \
 	   alloc.o \
 	   sistemas.o \
-	   functions.o \
 	   trabalho1.o
 
 # regra default
