@@ -17,21 +17,3 @@ double timestamp(void)
   gettimeofday(&tp, NULL);
   return((double)(tp.tv_sec*1000.0 + tp.tv_usec/1000.0));
 }
-
-
-
-
-// /* Executa funcao  para um valor de x */
-// double fx(double x, char *f) {
-//     void *g = evaluator_create(f);
-    
-//     double result = evaluator_evaluate_x(g, x);
-//     return result;
-// }
-
-// double dx(double x, char *f) {
-//     void *g = evaluator_create(f);
-    
-//     double result = evaluator_evaluate_x(g, x);
-//     return result;
-// }
