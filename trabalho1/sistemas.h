@@ -1,3 +1,7 @@
+/*
+    Luzia Millena Santos Silva, GRR20185174, 	lmss18@inf.ufpr.br
+    Matheus Pacheco Santos,     GRR20192786,	mps19@inf.ufpr.br
+*/
 #ifndef __SISTEMAS_H__
 #define __SISTEMAS_H__
 
@@ -47,13 +51,6 @@ void finalizaMatQuad(MatQuadraticaSL *mat);
  * mat deve ser previamente alocado
  */
 void geraMatDerivParcial(void ****mat, SNL sistema);
-
-
-/* Gera matriz de derivadas parciais do sistema e armaziena em mat 
- * Retorna 0 se houve sucesso, caso contrário retorna -1 representando falha de alocação 
- */
-void geraMatDerivParcial(void ****mat, SNL sistema);
-
 
 /* Realiza retro-substituição do SL representado por mat e armazena o resultado em x 
  * A matriz de coefecientes deve triangular inferior

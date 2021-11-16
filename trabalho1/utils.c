@@ -1,5 +1,8 @@
+/*
+    Luzia Millena Santos Silva, GRR20185174, 	lmss18@inf.ufpr.br
+    Matheus Pacheco Santos,     GRR20192786,	mps19@inf.ufpr.br
+*/
 #include <stdio.h>
-#include <matheval.h>
 #include "utils.h"
 
 /*  Retorna tempo em milisegundos

@@ -1,3 +1,7 @@
+/*
+    Luzia Millena Santos Silva, GRR20185174, 	lmss18@inf.ufpr.br
+    Matheus Pacheco Santos,     GRR20192786,	mps19@inf.ufpr.br
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,6 +15,11 @@
 
 #define MSG_ERRO_ALOCACAO "Ocorreu um erro de alocação!"
 
+
+/* Le bloco de funções de acordo com a especificação do trabalho e chama função de resolução de SNLs 
+ * Imprime erros em stderr, e imprime os blocos de resolução de acordo com os argumentos -o <local de impressao>
+   se a não for especificado imprime em stdout
+ */
 int main(int argc, char *argv[]){
     FILE *saida = (argc > 2 && (strcmp(argv[1],"-o") == 0)) ? fopen(argv[2],"w") : stdout;
     int maxIteracoes, numFuncoes;

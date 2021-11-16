@@ -1,3 +1,6 @@
+# Luzia Millena Santos Silva, GRR20185174, 	lmss18@inf.ufpr.br
+# Matheus Pacheco Santos,     GRR20192786,	mps19@inf.ufpr.br
+
 CC = gcc -g
 PREFIX = ${HOME}
 LIBDIR = $(PREFIX)/lib
@@ -6,11 +9,11 @@ INCDIR = $(PREFIX)/include
 CFLAGS = -Wall -std=c11 -I$(INCDIR)
 LFLAGS = -Wl,-rpath -Wl,$(LIBDIR) -L$(LIBDIR) -lmatheval
 
-PROG = trabalho1
+PROG = newtonSNL
 OBJS = utils.o \
 	   alloc.o \
 	   sistemas.o \
-	   trabalho1.o
+	   newtonSNL.o
 
 # regra default
 all: $(PROG)
