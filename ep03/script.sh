@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Compila os códigos fontes
+gcc geraSL.c -lm 
+make avx
+
 # Prepara arquivos que vão receber as tabelas de dados
 echo "Tamanho Gauss_Jacobi Gauss_Jacobi_OPT" > "table-l3.dat"
 cp table-l3.dat table-l2cache.dat
@@ -26,3 +30,8 @@ for i  in  ${TAMANHOS[*]}; do
     FLOPS_DP=$(likwid-perfctr -C 3 -m -g FLOPS_DP ./gaussJacobi-likwid input_$i.dat | grep "DP \[MFLOP\/s\]" | awk -F'|' '{ printf "%s ", $3}')
     echo "$i $FLOPS_DP" >> "table-flops-dp.dat"
 done
+
+# Limpa arquivos 
+make purge
+rm -rf input*
+rm -rf out*
