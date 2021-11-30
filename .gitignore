@@ -1,5 +1,6 @@
 *.o
 *.out
+ep03/inputs_outputs/
 
 # Editor directories and files
 .vscode/*
