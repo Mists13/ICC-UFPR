@@ -84,6 +84,7 @@ gnuplot -e '
             set output "graphics/RUNTIME.png";
             set title "Tempo de Execução";
             set key outside right;
+            set logscale y;
             set xlabel "Tamanho";
             set ylabel "Tempo de execução (s)";
             plot "tables/table-runtime.dat" using 1:2 with lines smooth csplines t"Gauss Jacobi", 

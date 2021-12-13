@@ -1,0 +1,77 @@
+Relatório EP03 - Introdução à Computação Científica
+
+Luzia Millena Santos Silva, GRR20185174, 	lmss18@inf.ufpr.br
+Matheus Pacheco Santos,     GRR20192786,	mps19@inf.ufpr.br
+
+
+| Arquitetura do processador utilizado nos testes:
+|
+| CPU name:	Intel(R) Core(TM) i3-7020U CPU @ 2.30GHz
+| CPU type:	Intel Kabylake processor
+| CPU stepping:	9
+|
+| mais informações no topology.txt
+
+
+| Para executar basta executar o script: './script.sh'.
+| Pode ser necessário dar permissão de execução.
+
+
+Identificação das otimizações aplicadas na função gaussJacobiOpt():
+
+_____________________________________________________________________________________________________________________________________________
+
+1) A alocação de matrizes foi feita de maneira a possibilitar que
+a estrutura aponte para endereços contíguos de memória através do seguinte trecho:
+
+double **A = (double **) malloc(sizeof(double *) * n);
+  A[0] = (double *) malloc(sizeof(double) * n*PAD(n));
+  for (int i = 1; i < n; ++i)
+    A[i] = A[0] + i*PAD(n);
+
+Isso melhora a performance, já que as instruções SIMD são executadas
+em endereços consecutivos de memória, logo será possível aplicá-las. Além disso, há um melhor aproveitamento
+de cache, pois ao transferir uma linha é possível usar mais posições de uma
+estrutura antes que ocorra um cache miss.
+
+_____________________________________________________________________________________________________________________________________________
+
+2) Foi utilizada a técnica de Padding em diversos trechos do código, como por exemplo:
+
+A[0] = (double *) malloc(sizeof(double) * n*PAD(n));
+
+Isso faz com que o tamanho da estrutura seja diferente de uma potência de 2, com o objetivo de evitar a transferencia de dados excessiva (cache thrashing) 
+que pode ser causada ao transferir linhas de cache desse tamanho, pois o calculo do bloco a ser transferido acaba sendo sempre o mesmo.
+
+_____________________________________________________________________________________________________________________________________________
+
+3) Loop unrolling e Jam: Foi feito o desenrolamento do segundo laço do método de GaussJacobi para permitir a efetividade de instruções SIMD no pipeline.
+Dentro do laço foi feito o desmembramento da soma em 4 passos para realizar operações de forma vetorizada. Além disso foi feito a fusão de laçi (Jam)
+
+_____________________________________________________________________________________________________________________________________________
+
+4) No terceiro laço dentro do método de Gauss Jacobi, foi retirado o desvio condicional que verifica:
+j != i, (j == i indica a diagonal principal)
+
+Isso foi feito para evitar o desvio condicional dentro do laço, que pode impedir o compilador de realizar otimizaões e também prejudicar o pipeline.
+
+
+_____________________________________________________________________________________________________________________________________________
+
+5) memcpy(x, x_atual, sizeof(double) * PAD(n));
+
+Ao usar o memcpy, a copia dos valores de uma estrututa é feita de forma otimizada. 
+Os valores são copiados do vetor x_atual para x, sem que linhas de cache sejam transferidas da memoria principal ao longo da iteração, já que
+o memcpy transfere uma quantidade de bytes de uma vez só.
+
+
+
+
+Observações:
+
+No gráfico "L2 - Data Cache Miss Ratio" gerado com o grupo L2CACHE do likwid, foi observado que para valores pequenos o código otimizado se sai bem, porém para n grande a performance fica pior do que o sem otimização. 
+
+Após rodar vários testes para cada caso, vimos que para n >= 3000, o algoritmo otimizado começa a ter uma performance pior que o algoritmo normal.
+E para a compilação com make avx, notamos que para n >= 2048 o algoritmo tem performance pior que o código não otimizado
+
+
