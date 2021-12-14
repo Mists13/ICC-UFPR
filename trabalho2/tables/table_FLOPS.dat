@@ -1,0 +1,4 @@
+TAMANHO MAT_DERIV_PACIAL_DP_T1 MAT_DERIV_PACIAL_AVX_T1 TOTAL_T1_DP TOTAL_T1_AVX MAT_JACOBI_T1_DP MAT_JACOBI_T1_AVX RESOLUCAO_T1_DP RESOLUCAO_T1_AVX
+10      0.9918            0       3.0717       0.7207      36.5795            0      1211.5425       714.1724  
+32      1.0675            0      27.9387      16.0970      16.8058            0    3104.4252    2619.9792  
+50      0.6427            0      28.8272      20.0058       7.8655            0    3505.2476    3157.3387  
