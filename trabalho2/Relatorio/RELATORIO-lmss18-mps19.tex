@@ -1,0 +1,99 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{amsmath,amsthm,amsfonts,amssymb}
+\usepackage[left=1.2in,right=1.2in,top=1.2in,bottom=1.2in]{geometry}
+\usepackage{graphicx}
+\author{Matheus Pacheco dos Santos e Luzia Millena Santos Silva}
+\title{Trabalho 2 - ICC}
+\begin{document}
+	\maketitle
+	
+	\section{Estrutura de dados}
+	Seja o sistema não linear de várias instâncias de \textit{Função Triadiagonal de Broyden}:
+	\begin{align*}
+		\begin{cases}
+			(3-2\cdot x_{1})\cdot x_{1}-2\cdot x_{2}+1 \\
+			(3-2\cdot x_{2})\cdot x_{2}-x_{1}-2 \cdot x_{3}+1 \\
+			(3-2\cdot x_{3})\cdot x_{3}-x_{2} -2 \cdot x_{4} + 1 \\
+			(3-2\cdot x_{3})\cdot x_{4}-x_{3} + 1 
+		\end{cases}
+	\end{align*}
+	através desse sistema a matriz de derivadas parciais irá ficar da forma:
+	\begin{align*}
+		\begin{pmatrix}
+			-2x_{1} + 3 & -2 & 0 & 0 \\
+			-1 & - 2x_{2} + 3 & - 2 & 0 \\
+			0 & - 1 & - 2x_{3} + 3 & -2 \\
+			0 & 0 & - 1 & - 2x_{4} + 3 \\
+		\end{pmatrix}
+	\end{align*}
+	ou seja, a matriz de derivadas parciais de um sistema de instâncias de \textit{Função Triadiagonal de Broyden}, é uma matriz triadiagonal para qualquer que seja a dimensão desta matriz. 
+	
+	Note que podemos guardar essa matriz triadiagonal com apenas três vetores:
+	\begin{align*}
+		& D_{1} = 
+		\begin{bmatrix}
+		 -2 & -2  & -2 \\
+		\end{bmatrix} & \\
+		& D_{2} = 
+		\begin{bmatrix}
+			-2x_{1} + 3 & - 2x_{2} + 3 & - 2x_{3} + 3 & - 2x_{4} + 3
+		\end{bmatrix} & \\
+		& D_{3} = 
+		\begin{bmatrix}
+		-1 & -1  & -1 \\
+		\end{bmatrix} & 
+	\end{align*}
+	note que $ D_{1} $ e $ D_{3} $, tem $ n - 1 $ elementos no vetor, sendo $ n = 3 $.
+	
+	Sendo assim, podemos descrever uma matriz de derivadas parciais de um sistema não linear de instâncias de \textit{Função Triadiagonal de Broyden} com apenas $ 3 $ vetores da seguinte forma: 
+	\begin{align*}
+		& D_{1} = 
+		\begin{bmatrix}
+		-2 & -2  & -2 & \ldots & -2 \\
+		\end{bmatrix} & \\
+		& D_{2} = 
+		\begin{bmatrix}
+		-2x_{1} + 3 & - 2x_{2} + 3 & - 2x_{3} + 3 & - 2x_{4} + 3 & \ldots & - 2x_{n} + 3 
+		\end{bmatrix} & \\
+		& D_{3} = 
+		\begin{bmatrix}
+		-1 & -1  & -1 & \ldots & -1 \\
+		\end{bmatrix} & 
+	\end{align*}
+	com $ D_{2} $ com $ n $ elementos e $ D_{1} $, $ D_{3} $ com $ n - 1 $ elementos.
+	
+	Portanto temos três fatos:
+	
+	\begin{enumerate}
+		\item A matriz de derivadas parciais pode ser representada na forma de $ 3 $ diagonais 
+		\begin{align*}
+		& D_{1} = 
+		\begin{bmatrix}
+		-2 & -2  & -2 & \ldots & -2 \\
+		\end{bmatrix} & \\
+		& D_{2} = 
+		\begin{bmatrix}
+		-2x_{1} + 3 & - 2x_{2} + 3 & - 2x_{3} + 3 & - 2x_{4} + 3 & \ldots & - 2x_{n} + 3 
+		\end{bmatrix} & \\
+		& D_{3} = 
+		\begin{bmatrix}
+		-1 & -1  & -1 & \ldots & -1 \\
+		\end{bmatrix} & 
+		\end{align*}
+		
+		\item $ D_{1} $ possui somente elementos $ -2 $ e $ D_{3}  $ possui somente elementos $ -1 $
+		
+		\item Elemento $ x_{i} $ da diagonal $ D_{2} $ é da forma $  - 2x_{i^{'}} + 3 $ sendo $ x_{i^{'}} $ o valor da aproximação anterior.
+	\end{enumerate}
+	
+	Mas veja que o valor de $ x_{i} $ pode ser descoberto da seguinte maneira: 
+	$$ x_{i} = \frac{2 x_{i+1} + x_{i-1}}{-2 x_{i^{'}} + 3}  $$ 
+	onde $ x_{i^{'}} $ é a aproximação anterior. Com exceção de $ x_{1} $ e $ x_{n} $, que são:
+	\begin{align*}
+		& x_{1} = \frac{2 x_{2}}{-2 x_{1^{'}} + 3} & \\ 
+		& x_{n} = \frac{ - x_{n-1}}{-2 x_{n^{'}} + 3}
+	\end{align*}
+\end{document}
