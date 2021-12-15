@@ -3,15 +3,55 @@
 \usepackage[T1]{fontenc}
 \usepackage[portuguese]{babel}
 \usepackage{amsmath,amsthm,amsfonts,amssymb}
+\usepackage{listings,lstautogobble}
 \usepackage[left=1.2in,right=1.2in,top=1.2in,bottom=1.2in]{geometry}
 \usepackage{graphicx}
+\usepackage{xcolor}
 \author{Matheus Pacheco dos Santos e Luzia Millena Santos Silva}
 \title{Trabalho 2 - ICC}
+\definecolor{verde}{rgb}{0,0.5,0}
+\lstset{
+	language=C,
+	basicstyle=\ttfamily\small,
+	keywordstyle=\color{blue},
+	stringstyle=\color{verde},
+	commentstyle=\color{red},
+	extendedchars=true,
+	showspaces=false,
+	showstringspaces=false,
+	numbers=left,
+	numberstyle=\tiny,
+	breaklines=true,
+	backgroundcolor=\color{green!10},
+	breakautoindent=true,
+	captionpos=b,
+	xleftmargin=0pt,
+	autogobble=true,
+	framesep=0pt,
+	tabsize=4,
+	inputencoding=utf8,  % Input encoding
+	extendedchars=true,  % Extended ASCII
+	literate=        % Support additional characters
+	{á}{{\'a}}1  {é}{{\'e}}1  {í}{{\'i}}1 {ó}{{\'o}}1  {ú}{{\'u}}1
+	{Á}{{\'A}}1  {É}{{\'E}}1  {Í}{{\'I}}1 {Ó}{{\'O}}1  {Ú}{{\'U}}1
+	{à}{{\`a}}1  {è}{{\`e}}1  {ì}{{\`i}}1 {ò}{{\`o}}1  {ù}{{\`u}}1
+	{À}{{\`A}}1  {È}{{\'E}}1  {Ì}{{\`I}}1 {Ò}{{\`O}}1  {Ù}{{\`U}}1
+	{ä}{{\"a}}1  {ë}{{\"e}}1  {ï}{{\"i}}1 {ö}{{\"o}}1  {ü}{{\"u}}1
+	{Ä}{{\"A}}1  {Ë}{{\"E}}1  {Ï}{{\"I}}1 {Ö}{{\"O}}1  {Ü}{{\"U}}1
+	{â}{{\^a}}1  {ê}{{\^e}}1  {î}{{\^i}}1 {ô}{{\^o}}1  {û}{{\^u}}1
+	{Â}{{\^A}}1  {Ê}{{\^E}}1  {Î}{{\^I}}1 {Ô}{{\^O}}1  {Û}{{\^U}}1
+	{œ}{{\oe}}1  {Œ}{{\OE}}1  {æ}{{\ae}}1 {Æ}{{\AE}}1  {ß}{{\ss}}1
+	{ç}{{\c c}}1 {Ç}{{\c C}}1 {ø}{{\o}}1  {Ø}{{\O}}1   {å}{{\r a}}1
+	{Å}{{\r A}}1 {ã}{{\~a}}1  {õ}{{\~o}}1 {Ã}{{\~A}}1  {Õ}{{\~O}}1
+	{ñ}{{\~n}}1  {Ñ}{{\~N}}1  {¿}{{?`}}1  {¡}{{!`}}1
+	{°}{{\textdegree}}1 {º}{{\textordmasculine}}1 {ª}{{\textordfeminine}}1 
+}
+
 \begin{document}
 	\maketitle
 	
-	\section{Estrutura de dados}
-	Seja o sistema não linear de várias instâncias de \textit{Função Triadiagonal de Broyden}:
+	\section{Matriz de Derivadas Parciais}
+	Seja o sistema não linear de instâncias de \textit{Função Tridiagonal de Broyden}:
 	\begin{align*}
 		\begin{cases}
 			(3-2\cdot x_{1})\cdot x_{1}-2\cdot x_{2}+1 \\
@@ -29,9 +69,9 @@
 			0 & 0 & - 1 & - 2x_{4} + 3 \\
 		\end{pmatrix}
 	\end{align*}
-	ou seja, a matriz de derivadas parciais de um sistema de instâncias de \textit{Função Triadiagonal de Broyden}, é uma matriz triadiagonal para qualquer que seja a dimensão desta matriz. 
+	ou seja, a matriz de derivadas parciais de um sistema de instâncias de \textit{Função Tridiagonal de Broyden}, é uma matriz tridiagonal para qualquer que seja a dimensão desta matriz. 
 	
-	Note que podemos guardar essa matriz triadiagonal com apenas três vetores:
+	Note que podemos guardar essa matriz tridiagonal com apenas três vetores:
 	\begin{align*}
 		& D_{1} = 
 		\begin{bmatrix}
@@ -65,35 +105,92 @@
 	\end{align*}
 	com $ D_{2} $ com $ n $ elementos e $ D_{1} $, $ D_{3} $ com $ n - 1 $ elementos.
 	
-	Portanto temos três fatos:
+	Veja que poderíamos otimizar ao máximo pelo fato de que $ D_{1}, D_{2} $ e $ D_{3} $ terem certas "propriedades" como:
+	\begin{itemize}
+		\item Todo elemento de $ D_{1} $ é igual $ -2 $.
+		\item Todo elemento de $ D_{2} $ é da forma $ -2x_{i} + 3 $.
+		\item Todo elemento de $ D_{3} $ é igual $ -1 $.
+	\end{itemize}
+
+	Mas para fins didáticos orientados pelo professor vamos calcular as três diagonais para termos uma comparação com o que foi otimizado.
 	
-	\begin{enumerate}
-		\item A matriz de derivadas parciais pode ser representada na forma de $ 3 $ diagonais 
-		\begin{align*}
-		& D_{1} = 
-		\begin{bmatrix}
-		-2 & -2  & -2 & \ldots & -2 \\
-		\end{bmatrix} & \\
-		& D_{2} = 
-		\begin{bmatrix}
-		-2x_{1} + 3 & - 2x_{2} + 3 & - 2x_{3} + 3 & - 2x_{4} + 3 & \ldots & - 2x_{n} + 3 
-		\end{bmatrix} & \\
-		& D_{3} = 
-		\begin{bmatrix}
-		-1 & -1  & -1 & \ldots & -1 \\
-		\end{bmatrix} & 
-		\end{align*}
+	Vamos agora mostrar como fizemos a nossa função que gera as matrizes parciais.
+
+	Veja que podemos gerar as três diagonais da seguinte forma, 
+	\begin{lstlisting}
+	void geraMatTridiagonalDerivParcial(void ****diagonais, SNL sistema) {
+  		for (int i = 0; i < sistema.numFuncoes; i++) {
+			sprintf(var,"x%d", i+1);
+			(*diagonais)[1][i] = evaluator_derivative(sistema.funcoes[i], var);
+		}
 		
-		\item $ D_{1} $ possui somente elementos $ -2 $ e $ D_{3}  $ possui somente elementos $ -1 $
+		for (int i = 0; i < sistema.numFuncoes - 1; i++) {
+			sprintf(var,"x%d", i+2);
+			(*diagonais)[0][i] = evaluator_derivative(sistema.funcoes[i], var);
+		}
 		
-		\item Elemento $ x_{i} $ da diagonal $ D_{2} $ é da forma $  - 2x_{i^{'}} + 3 $ sendo $ x_{i^{'}} $ o valor da aproximação anterior.
-	\end{enumerate}
-	
-	Mas veja que o valor de $ x_{i} $ pode ser descoberto da seguinte maneira: 
-	$$ x_{i} = \frac{2 x_{i+1} + x_{i-1}}{-2 x_{i^{'}} + 3}  $$ 
-	onde $ x_{i^{'}} $ é a aproximação anterior. Com exceção de $ x_{1} $ e $ x_{n} $, que são:
-	\begin{align*}
-		& x_{1} = \frac{2 x_{2}}{-2 x_{1^{'}} + 3} & \\ 
-		& x_{n} = \frac{ - x_{n-1}}{-2 x_{n^{'}} + 3}
-	\end{align*}
+		for (int i = 0; i < sistema.numFuncoes-1; i++) {
+			sprintf(var,"x%d", i+1);
+			(*diagonais)[2][i] = evaluator_derivative(sistema.funcoes[i+1], var);
+		}
+	}
+	\end{lstlisting}
+	mas veja que podemos fazer a fusão dos laços, 
+	\begin{lstlisting}
+        int i = 0;
+	    for (i = 0; i < sistema.numFuncoes - 1; i++) {
+		    sprintf(var,"x%d", i+2);
+		    (*diagonais)[0][i] = evaluator_derivative(sistema.funcoes[i], var);
+		    
+		    sprintf(var,"x%d", i+1);
+		    (*diagonais)[1][i] = evaluator_derivative(sistema.funcoes[i], var);
+		    (*diagonais)[2][i] = evaluator_derivative(sistema.funcoes[i+1], var);
+	    }
+	    sprintf(var,"x%d", i+1);
+	    (*diagonais)[1][i] = evaluator_derivative(sistema.funcoes[i], var);
+	\end{lstlisting}
+	e agora aplicamos \textit{Unroll} \& \textit{Jam},
+	\begin{lstlisting}
+	void geraMatTridiagonalDerivParcial(void ****diagonais, SNL sistema) {
+		int i = 0;
+		int limit = (sistema.numFuncoes - 1) - (sistema.numFuncoes - 1) % 4; 
+		for (i = 0; i < limit; i += 4) {
+			sprintf(var,"x%d", i+2);
+			(*diagonais)[0][i] = evaluator_derivative(sistema.funcoes[i], var);
+			sprintf(var,"x%d", i+1);
+			(*diagonais)[1][i] = evaluator_derivative(sistema.funcoes[i], var);
+			(*diagonais)[2][i] = evaluator_derivative(sistema.funcoes[i+1], var);
+			
+			sprintf(var,"x%d", i+3);
+			(*diagonais)[0][i+1] = evaluator_derivative(sistema.funcoes[i+1], var);
+			sprintf(var,"x%d", i+2);
+			(*diagonais)[1][i+1] = evaluator_derivative(sistema.funcoes[i+1], var);
+			(*diagonais)[2][i+1] = evaluator_derivative(sistema.funcoes[i+2], var);
+			
+			sprintf(var,"x%d", i+4);
+			(*diagonais)[0][i+2] = evaluator_derivative(sistema.funcoes[i+2], var);
+			sprintf(var,"x%d", i+3);
+			(*diagonais)[1][i+2] = evaluator_derivative(sistema.funcoes[i+2], var);
+			(*diagonais)[2][i+2] = evaluator_derivative(sistema.funcoes[i+3], var);
+			
+			sprintf(var,"x%d", i+5);
+			(*diagonais)[0][i+3] = evaluator_derivative(sistema.funcoes[i+3], var);
+			sprintf(var,"x%d", i+4);
+			(*diagonais)[1][i+3] = evaluator_derivative(sistema.funcoes[i+3], var);
+			(*diagonais)[2][i+3] = evaluator_derivative(sistema.funcoes[i+4], var);
+		}
+		
+		// Resíduos
+		for (i = limit; i < sistema.numFuncoes - 1; i++) {
+			sprintf(var,"x%d", i+2);
+			(*diagonais)[0][i] = evaluator_derivative(sistema.funcoes[i], var);
+			sprintf(var,"x%d", i+1);
+			(*diagonais)[1][i] = evaluator_derivative(sistema.funcoes[i], var);
+			(*diagonais)[2][i] = evaluator_derivative(sistema.funcoes[i+1], var);
+		}
+		sprintf(var,"x%d", i+1);
+		(*diagonais)[1][i] = evaluator_derivative(sistema.funcoes[i], var);
+	}
+	\end{lstlisting}
+	chegando na noss função final. Note que a diagonal superior está no indice $ 0 $, principal no $ 1 $ e inferior no $ 2 $.
 \end{document}

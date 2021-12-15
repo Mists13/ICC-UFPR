@@ -9,6 +9,7 @@
 #include "sistemas.h"
 #include "alloc.h"
 #include "utils.h"
+#include <likwid.h>
 
 #ifndef MAX_SIZE_STR
 #define MAX_SIZE_STR 100
@@ -85,6 +86,8 @@ void geraMatDerivParcial(void **diagPrincipal, SNL sistema) {
         printf("f'(x):%s\n", evaluator_get_string(diagPrincipal[i]));
     }
 }
+
+
 
 void eliminacaoGaussJordan(MatQuadraticaSL *mat) {
 
@@ -188,44 +191,119 @@ void printaTemposMetodoNewtonSNL(FILE *saida, double tempos[4]) {
     fprintf(saida, "###########\n");
 }
 
-int metodoNewtonSNL(SNL sistema, double *xAprox, double epsilon, int maxIteracoes, FILE *saida) {
+void calculaMatJacobianaTriadigonal(void ***matDiagDeriv, double ***matDiagJacobiana, char **vars, int numFuncoes, double *valoresX) {
+    int i = 0;
+    int limit = (numFuncoes- 1) - (numFuncoes - 1) % 4; 
+    for (i = 0; i < limit; i += 4) {
+        (*matDiagJacobiana)[0][i] = evaluator_evaluate(matDiagDeriv[0][i], numFuncoes, vars, valoresX);
+        (*matDiagJacobiana)[1][i] = evaluator_evaluate(matDiagDeriv[1][i], numFuncoes, vars, valoresX);
+        (*matDiagJacobiana)[2][i] = evaluator_evaluate(matDiagDeriv[2][i], numFuncoes, vars, valoresX);
+        
+        (*matDiagJacobiana)[0][i+1] = evaluator_evaluate(matDiagDeriv[0][i+1], numFuncoes, vars, valoresX);
+        (*matDiagJacobiana)[1][i+1] = evaluator_evaluate(matDiagDeriv[1][i+1], numFuncoes, vars, valoresX);
+        (*matDiagJacobiana)[2][i+1] = evaluator_evaluate(matDiagDeriv[2][i+1], numFuncoes, vars, valoresX);
+
+        (*matDiagJacobiana)[0][i+2] = evaluator_evaluate(matDiagDeriv[0][i+2], numFuncoes, vars, valoresX);
+        (*matDiagJacobiana)[1][i+2] = evaluator_evaluate(matDiagDeriv[1][i+2], numFuncoes, vars, valoresX);
+        (*matDiagJacobiana)[2][i+2] = evaluator_evaluate(matDiagDeriv[2][i+2], numFuncoes, vars, valoresX);
+
+        (*matDiagJacobiana)[0][i+3] = evaluator_evaluate(matDiagDeriv[0][i+3], numFuncoes, vars, valoresX);
+        (*matDiagJacobiana)[1][i+3] = evaluator_evaluate(matDiagDeriv[1][i+3], numFuncoes, vars, valoresX);
+        (*matDiagJacobiana)[2][i+3] = evaluator_evaluate(matDiagDeriv[2][i+3], numFuncoes, vars, valoresX);
+    }
+
+    // Resíduos
+    for (i = limit; i < numFuncoes - 1; i++) {
+        (*matDiagJacobiana)[0][i] = evaluator_evaluate(matDiagDeriv[0][i], numFuncoes, vars, valoresX);
+        (*matDiagJacobiana)[1][i] = evaluator_evaluate(matDiagDeriv[1][i], numFuncoes, vars, valoresX);
+        (*matDiagJacobiana)[2][i] = evaluator_evaluate(matDiagDeriv[2][i], numFuncoes, vars, valoresX);
+    }
+    (*matDiagJacobiana)[1][i] = evaluator_evaluate(matDiagDeriv[1][i], numFuncoes, vars, valoresX);
+}
+
+// Calcula as três diagonais da matriz de derivadas parciais usando as técnicas Unroll & Jam
+void geraMatTridiagonalDerivParcial(void ****diagonais, SNL sistema) {
+    char var[MAX_SIZE_STR];
+    int i = 0;
+    int limit = (sistema.numFuncoes - 1) - (sistema.numFuncoes - 1) % 4; 
+    for (i = 0; i < limit; i += 4) {
+        sprintf(var,"x%d", i+2);
+        (*diagonais)[0][i] = evaluator_derivative(sistema.funcoes[i], var);
+        sprintf(var,"x%d", i+1);
+        (*diagonais)[1][i] = evaluator_derivative(sistema.funcoes[i], var);
+        (*diagonais)[2][i] = evaluator_derivative(sistema.funcoes[i+1], var);
+
+        sprintf(var,"x%d", i+3);
+        (*diagonais)[0][i+1] = evaluator_derivative(sistema.funcoes[i+1], var);
+        sprintf(var,"x%d", i+2);
+        (*diagonais)[1][i+1] = evaluator_derivative(sistema.funcoes[i+1], var);
+        (*diagonais)[2][i+1] = evaluator_derivative(sistema.funcoes[i+2], var);
+
+        sprintf(var,"x%d", i+4);
+        (*diagonais)[0][i+2] = evaluator_derivative(sistema.funcoes[i+2], var);
+        sprintf(var,"x%d", i+3);
+        (*diagonais)[1][i+2] = evaluator_derivative(sistema.funcoes[i+2], var);
+        (*diagonais)[2][i+2] = evaluator_derivative(sistema.funcoes[i+3], var);
+
+        sprintf(var,"x%d", i+5);
+        (*diagonais)[0][i+3] = evaluator_derivative(sistema.funcoes[i+3], var);
+        sprintf(var,"x%d", i+4);
+        (*diagonais)[1][i+3] = evaluator_derivative(sistema.funcoes[i+3], var);
+        (*diagonais)[2][i+3] = evaluator_derivative(sistema.funcoes[i+4], var);
+    }
+
+    // Resíduos
+    for (i = limit; i < sistema.numFuncoes - 1; i++) {
+        sprintf(var,"x%d", i+2);
+        (*diagonais)[0][i] = evaluator_derivative(sistema.funcoes[i], var);
+        sprintf(var,"x%d", i+1);
+        (*diagonais)[1][i] = evaluator_derivative(sistema.funcoes[i], var);
+        (*diagonais)[2][i] = evaluator_derivative(sistema.funcoes[i+1], var);
+    }
+    sprintf(var,"x%d", i+1);
+    (*diagonais)[1][i] = evaluator_derivative(sistema.funcoes[i], var);
+}
+
+int metodoNewtonSNLMatTridiagonal(SNL sistema, double *xAprox, double epsilon, int maxIteracoes, FILE *saida) {
     double *deltaX, normaFuncoes, normaDelta, temp, tempos[4];
-    void ***matDerivParcial;
+    void ***diagDerivadas;
     MatQuadraticaSL mat;
     char **vars;
-    void **diagPrincipal;
+
     // Alocações
     deltaX = malloc(sizeof(double) * sistema.numFuncoes);
     if (deltaX == NULL) {
         return -1;
     }
-    if (alocaMatPonteirosVoids(sistema.numFuncoes, sistema.numFuncoes, &matDerivParcial) == -1) {
+    if (alocaMatPonteirosVoids(sistema.numFuncoes, sistema.numFuncoes, &diagDerivadas) == -1) {
         free(deltaX);
         return -1;
     }
     // Inicializa estrutura de acordo com sua dimensao
     if (inicializaMatQuad(&mat, sistema.numFuncoes) == -1) {
         free(deltaX);
-        freeMatPonteirosVoids(&matDerivParcial, sistema.numFuncoes, sistema.numFuncoes);
+        freeMatPonteirosVoids(&diagDerivadas, sistema.numFuncoes, sistema.numFuncoes);
         return -1;
     }
     // Monta matriz de variavéis, para usar no evaluator_evaluate
     if (alocaMatChars(sistema.numFuncoes, MAX_SIZE_STR, &vars)) {
         free(deltaX);
         finalizaMatQuad(&mat);
-        freeMatPonteirosVoids(&matDerivParcial, sistema.numFuncoes, sistema.numFuncoes);
+        freeMatPonteirosVoids(&diagDerivadas, sistema.numFuncoes, sistema.numFuncoes);
         return -1;
     } else {
         geraVars(&vars, sistema.numFuncoes);
     }
 
-    diagPrincipal = malloc(sizeof(void *) * sistema.numFuncoes);
+    LIKWID_MARKER_INIT;
+
     // Gera matriz de derivadas parciais e calcula seu tempo de execução
     tempos[INDICE_DERIVADAS] = timestamp();
-    geraMatDerivParcial(diagPrincipal, sistema);
-
+    LIKWID_MARKER_START("mat-derivadas-parciais");  
+    geraMatTridiagonalDerivParcial(&diagDerivadas, sistema);
+    LIKWID_MARKER_STOP("mat-derivadas-parciais");  
     tempos[INDICE_DERIVADAS] = timestamp() - tempos[INDICE_DERIVADAS];
-
+    
     // Printa primeiro bloco de aproximações
     fprintf(saida, "#\n");
     for (int i = 0; i < sistema.numFuncoes; i++) {
@@ -234,8 +312,10 @@ int metodoNewtonSNL(SNL sistema, double *xAprox, double epsilon, int maxIteracoe
 
     // Executa método newton e calcula seu tempo de execução
     tempos[INDICE_JACOBIANA] = tempos[INDICE_SL] = 0;
-    tempos[INDICE_TOTAL] = timestamp();    
-    for (int i = 0; i < maxIteracoes; i++) {
+    tempos[INDICE_TOTAL] = timestamp();
+    
+    LIKWID_MARKER_START("metodo-newton");
+    for (int i = 0; i < 1; i++) {
         // Defini norma de funções e termos independentes
         normaFuncoes = 0;
         for (int j = 0; j < sistema.numFuncoes; j++) {
@@ -252,58 +332,64 @@ int metodoNewtonSNL(SNL sistema, double *xAprox, double epsilon, int maxIteracoe
             free(deltaX);
             freeMatChars(&vars);
             finalizaMatQuad(&mat);
-            freeMatPonteirosVoids(&matDerivParcial, sistema.numFuncoes, sistema.numFuncoes);
+            freeMatPonteirosVoids(&diagDerivadas, sistema.numFuncoes, sistema.numFuncoes);
 
             tempos[INDICE_TOTAL] = timestamp() - tempos[INDICE_TOTAL];
             printaTemposMetodoNewtonSNL(saida, tempos);
             return 0;
         }
 
-        // Como critério espilon não foi satisfeito, vai haver uma nova aproximação
+        // // Como critério espilon não foi satisfeito, vai haver uma nova aproximação
         fprintf(saida, "#\n");
 
         // Calcula jacobiana e seu tempo de execução
         temp = timestamp();
-        calculaMatJacobiana(diagPrincipal, &mat.coeficientes, vars, sistema.numFuncoes, xAprox);
+        LIKWID_MARKER_START("jacobiana");
+        calculaMatJacobianaTriadigonal(diagDerivadas, &mat.coeficientes, vars, sistema.numFuncoes, xAprox);
+        LIKWID_MARKER_STOP("jacobiana");
         temp = timestamp() - temp;
         tempos[INDICE_JACOBIANA] += temp;
 
-        // Resolve SL e calcula seu tempo de execução
-        temp = timestamp();
-        eliminacaoGaussJordan(&mat);
+        // // Resolve SL e calcula seu tempo de execução
+        // temp = timestamp();
+        // LIKWID_MARKER_START("resolucao-snl");
+        // eliminacaoGaussJordan(&mat);
+        // LIKWID_MARKER_STOP("resolucao-snl");
         // retrossubs(mat,  &deltaX);
-        temp = timestamp() - temp;
-        tempos[INDICE_SL] += temp;
+        // temp = timestamp() - temp;
+        // tempos[INDICE_SL] += temp;
 
-        // Atualiza xAprox com as novas aproximações encontradas e obtém norma do delta x
-        normaDelta = 0;
-        for (int j = 0; j < sistema.numFuncoes; j++) {
-            xAprox[j] += deltaX[j];
+        // // Atualiza xAprox com as novas aproximações encontradas e obtém norma do delta x
+        // normaDelta = 0;
+        // for (int j = 0; j < sistema.numFuncoes; j++) {
+        //     xAprox[j] += deltaX[j];
 
-            fprintf(saida, "x%d = %lf\n", j+1, xAprox[j]);
-            if (fabs(deltaX[j]) > normaDelta) {
-                normaDelta = fabs(deltaX[j]);
-            }
-        }
+        //     fprintf(saida, "x%d = %lf\n", j+1, xAprox[j]);
+        //     if (fabs(deltaX[j]) > normaDelta) {
+        //         normaDelta = fabs(deltaX[j]);
+        //     }
+        // }
 
-        // Verifica de se norma do delta x satisfaz o critério epsilon
-        if (normaDelta < epsilon) {
-            free(deltaX);
-            freeMatChars(&vars);
-            finalizaMatQuad(&mat);
-            freeMatPonteirosVoids(&matDerivParcial, sistema.numFuncoes, sistema.numFuncoes);
+        // // Verifica de se norma do delta x satisfaz o critério epsilon
+        // if (normaDelta < epsilon) {
+        //     free(deltaX);
+        //     freeMatChars(&vars);
+        //     finalizaMatQuad(&mat);
+        //     freeMatPonteirosVoids(&matDerivParcial, sistema.numFuncoes, sistema.numFuncoes);
 
-            tempos[INDICE_TOTAL] = timestamp() - tempos[INDICE_TOTAL];
-            printaTemposMetodoNewtonSNL(saida, tempos);
-            return 0;
-        }
+        //     tempos[INDICE_TOTAL] = timestamp() - tempos[INDICE_TOTAL];
+        //     printaTemposMetodoNewtonSNL(saida, tempos);
+        //     return 0;
+        // }
     }
+    LIKWID_MARKER_STOP("metodo-newton");  
     tempos[INDICE_TOTAL] = timestamp() - tempos[INDICE_TOTAL];
     printaTemposMetodoNewtonSNL(saida, tempos);
-   
+    
+    LIKWID_MARKER_CLOSE;
     free(deltaX);
     freeMatChars(&vars);
     finalizaMatQuad(&mat);
-    freeMatPonteirosVoids(&matDerivParcial, sistema.numFuncoes, sistema.numFuncoes);
+    freeMatPonteirosVoids(&diagDerivadas, sistema.numFuncoes, sistema.numFuncoes);
     return 0;
 }

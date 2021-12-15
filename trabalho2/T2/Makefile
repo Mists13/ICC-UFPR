@@ -6,8 +6,14 @@ PREFIX = ${HOME}
 LIBDIR = $(PREFIX)/lib
 INCDIR = $(PREFIX)/include
 
-CFLAGS = -Wall -std=c11 -I$(INCDIR)
-LFLAGS = -Wl,-rpath -Wl,$(LIBDIR) -L$(LIBDIR) -lmatheval
+LIKWID = /home/soft/likwid
+LIKWID_FLAGS = -I$(LIKWID)/include -DLIKWID_PERFMON 
+LIKWID_LIBS = -L$(LIKWID)/lib -llikwid
+
+AVX_FLAGS = -O3 -mavx2 -march=native -fopt-info-vec 
+
+CFLAGS = -Wall -std=c11 -I$(INCDIR) $(AVX_FLAGS) $(LIKWID_FLAGS)
+LFLAGS = -Wl,-rpath -Wl,$(LIBDIR) -L$(LIBDIR) -lmatheval $(LIKWID_LIBS)
 
 PROG = newtonSNL
 OBJS = utils.o \

@@ -29,6 +29,14 @@ typedef struct
     double *termosLivres;
 } MatQuadraticaSL;
 
+
+typedef  struct
+{
+    int dimensao;
+    double **coefecientes;
+    double **termosLivres;
+} MatTridiagonal;
+
 /* Seta funções e numFuncoes */
 void inicializaSNL(SNL *sistema, void ***funcoes, int numFuncoes);
 
@@ -51,6 +59,8 @@ void finalizaMatQuad(MatQuadraticaSL *mat);
  * mat deve ser previamente alocado
  */
 void geraMatDerivParcial(void **diagPrincipal, SNL sistema);
+
+void geraMatTridiagonalDerivParcial(void ****diagonais, SNL sistema);
 
 /* Realiza retro-substituição do SL representado por mat e armazena o resultado em x 
  * A matriz de coefecientes deve triangular inferior
@@ -99,5 +109,8 @@ void printaTemposMetodoNewtonSNL(FILE *saida, double tempos[4]);
  * Retorna 0 se houve sucesso, caso contrário retorna -1 representando falha de alocação - única falha possível 
  */
 int metodoNewtonSNL(SNL sistema, double *xAprox, double epsilon, int maxIteracoes, FILE *saida);
+
+
+int metodoNewtonSNLMatTridiagonal(SNL sistema, double *xAprox, double epsilon, int maxIteracoes, FILE *saida);
 
 #endif
