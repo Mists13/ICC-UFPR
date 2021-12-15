@@ -50,7 +50,7 @@ void finalizaMatQuad(MatQuadraticaSL *mat);
 /* Gera matriz de derivdas parciais do SNL sistema e armazena em mat 
  * mat deve ser previamente alocado
  */
-void geraMatDerivParcial(void ****mat, SNL sistema);
+void geraMatDerivParcial(void **diagPrincipal, SNL sistema);
 
 /* Realiza retro-substituição do SL representado por mat e armazena o resultado em x 
  * A matriz de coefecientes deve triangular inferior
@@ -78,7 +78,7 @@ void eliminacaoGaussJordan(MatQuadraticaSL *mat);
  * É necessário para o cálculo o numero de funcoes (numFuncoes) e  um vetor de variaveis da equação, da forma: ["x1","x2","x3"..."xn"]
  * matJacobiana deve ser previamente alocada
  */
-void calculaMatJacobiana(void ***matDerivParcial, double ***matJacobiana, char **vars, int numFuncoes, double *valoresX);
+void calculaMatJacobiana(void **diagPrincipal, double ***matJacobiana, char **vars, int numFuncoes, double *valoresX);
 
 /* Gera variaveis de acordo com a dimensão e armazena em vars 
  * Por exemplo, dimensao = 3, teremos: ["x1", "x2", "x3"]

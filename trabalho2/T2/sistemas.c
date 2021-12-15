@@ -63,14 +63,43 @@ void finalizaMatQuad(MatQuadraticaSL *mat) {
     free(mat->termosLivres);
 }
 
-void geraMatDerivParcial(void ****mat, SNL sistema) {
-    char var[MAX_SIZE_STR];
+// void geraMatDerivParcial(void ****mat, SNL sistema) {
+//     char var[MAX_SIZE_STR];
 
-    for (int i = 0; i < sistema.numFuncoes; i++) {
-        sprintf(var,"x%d", i+1); // transforma inteiro em string 
-        for (int j = 0; j < sistema.numFuncoes; j++) {
-            (*mat)[j][i] = evaluator_derivative(sistema.funcoes[j], var);
-        }
+//     for (int i = 0; i < sistema.numFuncoes; i++) {
+//         sprintf(var,"x%d", i+1); // transforma inteiro em string 
+//         for (int j = 0; j < sistema.numFuncoes; j++) {
+//             (*mat)[j][i] = evaluator_derivative(sistema.funcoes[j], var);
+//         }
+//     }
+// }
+
+
+void geraMatDerivParcial(void **diagPrincipal, SNL sistema) {
+    char var[MAX_SIZE_STR];
+    int n = sistema.numFuncoes;
+
+    for (int i = 0; i < n; i++) {
+        sprintf(var,"x%d", i+1);
+        diagPrincipal[i] = evaluator_derivative(sistema.funcoes[i], var);
+        printf("f'(x):%s\n", evaluator_get_string(diagPrincipal[i]));
+    }
+}
+
+void eliminacaoGaussJordan(MatQuadraticaSL *mat) {
+
+    int n = mat->dimensao;
+    int a = 0;      // Diagonal inferior
+    int d = 1;      // Diagonal principal
+    int c = 2;      // Diagonal superior
+    
+    for (int i = 0; i < n; ++i) {
+
+        double m = mat->coeficientes[a][i]/ mat->coeficientes[d][i];
+        mat->coeficientes[a][i] = 0.0;
+
+        mat->coeficientes[d][i+1] -= mat->coeficientes[c][i]*m;
+        mat->termosLivres[i+1] -= mat->termosLivres[i]*m;
     }
 }
 
@@ -108,36 +137,39 @@ void trocaLinhaMat(MatQuadraticaSL *mat, int i, int pivo) {
     mat->termosLivres[pivo] = y;
 }
 
-void eliminacaoGaussJordan(MatQuadraticaSL *mat) {
-    int pivo;
+// void eliminacaoGaussJordan(MatQuadraticaSL *mat) {
+//     int pivo;
 
-    for (int i = 0; i < mat->dimensao; ++i) {
-        // Caso esteja na última coluna dos coeficientes não é mais necessário realizar troca de linha
-        if (i < mat->dimensao - 1) {
-            pivo = econtraMaxPivo(&mat->coeficientes, i, mat->dimensao);
-            if (i != pivo) {
-                trocaLinhaMat(mat, i, pivo);
-            }
-        }
+//     for (int i = 0; i < mat->dimensao; ++i) {
+//         // Caso esteja na última coluna dos coeficientes não é mais necessário realizar troca de linha
+//         if (i < mat->dimensao - 1) {
+//             pivo = econtraMaxPivo(&mat->coeficientes, i, mat->dimensao);
+//             if (i != pivo) {
+//                 trocaLinhaMat(mat, i, pivo);
+//             }
+//         }
 
-        for (int j = i+1; j < mat->dimensao; ++j) {
-            double m = (*mat).coeficientes[j][i] / mat->coeficientes[i][i];
-            mat->coeficientes[j][i] = 0.0;
+//         for (int j = i+1; j < mat->dimensao; ++j) {
+//             double m = (*mat).coeficientes[j][i] / mat->coeficientes[i][i];
+//             mat->coeficientes[j][i] = 0.0;
 
-            for (int k = i+1; k < mat->dimensao; ++k) {
-                mat->coeficientes[j][k] -= mat->coeficientes[i][k] * m;
-            }
+//             for (int k = i+1; k < mat->dimensao; ++k) {
+//                 mat->coeficientes[j][k] -= mat->coeficientes[i][k] * m;
+//             }
 
-            (mat->termosLivres)[j] -= (mat->termosLivres)[i] * m;
-        }
-    }
-}
+//             (mat->termosLivres)[j] -= (mat->termosLivres)[i] * m;
+//         }
+//     }
+// }
 
-void calculaMatJacobiana(void ***matDerivParcial, double ***matJacobiana, char **vars, int numFuncoes, double *valoresX) {
-    for (int i = 0; i < numFuncoes; i++){
-        for (int j = 0; j < numFuncoes; j++){
-            (*matJacobiana)[i][j] = evaluator_evaluate(matDerivParcial[i][j], numFuncoes, vars, valoresX);
-        }
+void calculaMatJacobiana(void **diagPrincipal, double ***matJacobiana, char **vars, int numFuncoes, double *valoresX) {
+
+    for (int i = 0; i < numFuncoes; i+=3){
+        (*matJacobiana)[0][i] = -1.0;
+        (*matJacobiana)[1][i+1] = evaluator_evaluate(diagPrincipal[i], numFuncoes, vars, valoresX);
+        printf("na funcao %s\n", evaluator_get_string(diagPrincipal[i]));
+        printf("valor %lf\n", (*matJacobiana)[1][i+1]);
+        (*matJacobiana)[2][i+2] = -2.0;
     }
 }
 
@@ -161,7 +193,7 @@ int metodoNewtonSNL(SNL sistema, double *xAprox, double epsilon, int maxIteracoe
     void ***matDerivParcial;
     MatQuadraticaSL mat;
     char **vars;
-   
+    void **diagPrincipal;
     // Alocações
     deltaX = malloc(sizeof(double) * sistema.numFuncoes);
     if (deltaX == NULL) {
@@ -187,9 +219,11 @@ int metodoNewtonSNL(SNL sistema, double *xAprox, double epsilon, int maxIteracoe
         geraVars(&vars, sistema.numFuncoes);
     }
 
+    diagPrincipal = malloc(sizeof(void *) * sistema.numFuncoes);
     // Gera matriz de derivadas parciais e calcula seu tempo de execução
     tempos[INDICE_DERIVADAS] = timestamp();
-    geraMatDerivParcial(&matDerivParcial, sistema);
+    geraMatDerivParcial(diagPrincipal, sistema);
+
     tempos[INDICE_DERIVADAS] = timestamp() - tempos[INDICE_DERIVADAS];
 
     // Printa primeiro bloco de aproximações
@@ -230,14 +264,14 @@ int metodoNewtonSNL(SNL sistema, double *xAprox, double epsilon, int maxIteracoe
 
         // Calcula jacobiana e seu tempo de execução
         temp = timestamp();
-        calculaMatJacobiana(matDerivParcial, &mat.coeficientes, vars, sistema.numFuncoes, xAprox);
+        calculaMatJacobiana(diagPrincipal, &mat.coeficientes, vars, sistema.numFuncoes, xAprox);
         temp = timestamp() - temp;
         tempos[INDICE_JACOBIANA] += temp;
 
         // Resolve SL e calcula seu tempo de execução
         temp = timestamp();
         eliminacaoGaussJordan(&mat);
-        retrossubs(mat,  &deltaX);
+        // retrossubs(mat,  &deltaX);
         temp = timestamp() - temp;
         tempos[INDICE_SL] += temp;
 
@@ -273,57 +307,3 @@ int metodoNewtonSNL(SNL sistema, double *xAprox, double epsilon, int maxIteracoe
     freeMatPonteirosVoids(&matDerivParcial, sistema.numFuncoes, sistema.numFuncoes);
     return 0;
 }
-
-// void geraMatDerivParcial(void **mat, SNL sistema, FILE saida) {
-//     char var[MAX_SIZE_STR];
-//     int superior = 0;
-//     int principal = 1;
-//     int inferior = 2;
-//     int n = sistema.numFuncoes;
-
-//     // Derivação da primeira linha do sistema
-
-//     sprintf(var,"x%d", 1);
-//     (mat)[principal][0] = evaluator_derivative(sistema.funcoes[0], var);
-//     fprintf(saida, " principal= %s\n", evaluator_get_string((mat)[principal][0]));
-
-//     sprintf(var,"x%d", 2);
-//     (mat)[superior][0] = evaluator_derivative(sistema.funcoes[0], var);
-//     fprintf(saida, " superior = %s\n", evaluator_get_string((mat)[superior][0]));
-
-//     for (int i = 1; i < n-1; i++) {
-//         sprintf(var,"x%d", i-1); // cria variavel (ex: x1)
-//         (mat)[inferior][i] = evaluator_derivative(sistema.funcoes[i], var);
-
-//         sprintf(var,"x%d", i);
-//         (mat)[principal][i] = evaluator_derivative(sistema.funcoes[i], var);
-
-//         sprintf(var,"x%d", i+1);
-//         (mat)[superior][i] = evaluator_derivative(sistema.funcoes[i], var);
-//     }
-
-//     // Derivação da ultima linha do sistema
-//     sprintf(var,"x%d", n-2);
-//     (mat)[n-2][inferior] = evaluator_derivative(sistema.funcoes[n-2], var);
-
-//     sprintf(var,"x%d", n-1);
-//     (mat)[n-1][principal] = evaluator_derivative(sistema.funcoes[n-1], var);
-//     fprintf(saida, " Ultima linha = %s\n", evaluator_get_string((*mat)[n-1][principal]));
-
-// }
-
-// void eliminacaoGaussJordan(MatQuadraticaSL mat) {
-
-//     int inferior = 0;
-//     int principal = 1;
-//     int superior = 2;
-//     int n = mat->dimensao;
-//     for (int i = 0; i < n; ++i) {
-
-//         double m = mat->coeficientes[inferior][i]/ mat->coeficientes[principal][i];
-//         mat->coeficientes[inferior][i] = 0.0;
-
-//         mat->coeficientes[principal][i+1] -= mat->coeficientes[superior][i]m;
-//         mat->termosLivres[i+1] -= mat->termosLivres[i]*m;
-//     }
-// }
