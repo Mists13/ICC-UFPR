@@ -11,6 +11,11 @@
 #include "utils.h"
 #include <likwid.h>
 
+#define SUPERIOR 0
+#define PRINCIPAL 1
+#define INFERIOR 2
+
+
 #ifndef MAX_SIZE_STR
 #define MAX_SIZE_STR 100
 #endif
@@ -264,10 +269,24 @@ void geraMatTridiagonalDerivParcial(void ****diagonais, SNL sistema) {
     (*diagonais)[1][i] = evaluator_derivative(sistema.funcoes[i], var);
 }
 
+void eliminacaoGaussJordanMatTridiagonal(double ***mat, double **termosLivres, double **x, int numFuncoes) {
+    double m;
+    for (int i = 0; i < numFuncoes - 1; i++) {
+        m = (*mat)[SUPERIOR][i] / (*mat)[PRINCIPAL][i];
+        (*mat)[SUPERIOR][i] = 0.0;
+        (*mat)[PRINCIPAL][i+1] -= (*mat)[INFERIOR][i] *m;
+        (*termosLivres)[i+1] -=  (*termosLivres)[i] * m;
+    }
+
+    (*x)[numFuncoes-1] = (*termosLivres)[numFuncoes-1] / (*mat)[PRINCIPAL][numFuncoes-1];
+    for (int i = numFuncoes-2; i >= 0; --i) {
+        (*x)[i] = ((*termosLivres)[i] - (*mat)[INFERIOR][i] * (*x)[i+1]) / (*mat)[1][PRINCIPAL];
+    }
+}
+
 int metodoNewtonSNLMatTridiagonal(SNL sistema, double *xAprox, double epsilon, int maxIteracoes, FILE *saida) {
-    double *deltaX, normaFuncoes, normaDelta, temp, tempos[4];
+    double *deltaX, *termosLivres, **diagCoeficientes, normaFuncoes, normaDelta, temp, tempos[4];
     void ***diagDerivadas;
-    MatQuadraticaSL mat;
     char **vars;
 
     // Alocações
@@ -275,21 +294,23 @@ int metodoNewtonSNLMatTridiagonal(SNL sistema, double *xAprox, double epsilon, i
     if (deltaX == NULL) {
         return -1;
     }
+    termosLivres = malloc(sizeof(double) * sistema.numFuncoes);
+    if (termosLivres == NULL) {
+        return -1;
+    }
     if (alocaMatPonteirosVoids(sistema.numFuncoes, sistema.numFuncoes, &diagDerivadas) == -1) {
         free(deltaX);
         return -1;
     }
-    // Inicializa estrutura de acordo com sua dimensao
-    if (inicializaMatQuad(&mat, sistema.numFuncoes) == -1) {
+    if (alocaMatDoubles(3, sistema.numFuncoes, &diagCoeficientes) == -1) {
         free(deltaX);
         freeMatPonteirosVoids(&diagDerivadas, sistema.numFuncoes, sistema.numFuncoes);
-        return -1;
     }
     // Monta matriz de variavéis, para usar no evaluator_evaluate
     if (alocaMatChars(sistema.numFuncoes, MAX_SIZE_STR, &vars)) {
         free(deltaX);
-        finalizaMatQuad(&mat);
         freeMatPonteirosVoids(&diagDerivadas, sistema.numFuncoes, sistema.numFuncoes);
+        freeMatDoubles(&diagCoeficientes);
         return -1;
     } else {
         geraVars(&vars, sistema.numFuncoes);
@@ -315,72 +336,71 @@ int metodoNewtonSNLMatTridiagonal(SNL sistema, double *xAprox, double epsilon, i
     tempos[INDICE_TOTAL] = timestamp();
     
     LIKWID_MARKER_START("metodo-newton");
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < maxIteracoes; i++) {
         // Defini norma de funções e termos independentes
         normaFuncoes = 0;
         for (int j = 0; j < sistema.numFuncoes; j++) {
-            mat.termosLivres[j] = evaluator_evaluate(sistema.funcoes[j], sistema.numFuncoes, vars, xAprox);
+            termosLivres[j] = evaluator_evaluate(sistema.funcoes[j], sistema.numFuncoes, vars, xAprox);
 
-            if (fabs(mat.termosLivres[j]) > normaFuncoes) {
-                normaFuncoes = fabs(mat.termosLivres[j]);
+            if (fabs(termosLivres[j]) > normaFuncoes) {
+                normaFuncoes = fabs(termosLivres[j]);
             }
-            mat.termosLivres[j] *= -1;
+            termosLivres[j] *= -1;
         }
         
         // Verifica se a norma das funções satisfaz o critério epsilon
         if (normaFuncoes < epsilon) {
             free(deltaX);
             freeMatChars(&vars);
-            finalizaMatQuad(&mat);
             freeMatPonteirosVoids(&diagDerivadas, sistema.numFuncoes, sistema.numFuncoes);
+            freeMatDoubles(&diagCoeficientes);
 
             tempos[INDICE_TOTAL] = timestamp() - tempos[INDICE_TOTAL];
             printaTemposMetodoNewtonSNL(saida, tempos);
             return 0;
         }
 
-        // // Como critério espilon não foi satisfeito, vai haver uma nova aproximação
+        // Como critério espilon não foi satisfeito, vai haver uma nova aproximação
         fprintf(saida, "#\n");
 
         // Calcula jacobiana e seu tempo de execução
         temp = timestamp();
         LIKWID_MARKER_START("jacobiana");
-        calculaMatJacobianaTriadigonal(diagDerivadas, &mat.coeficientes, vars, sistema.numFuncoes, xAprox);
+        calculaMatJacobianaTriadigonal(diagDerivadas, &diagCoeficientes, vars, sistema.numFuncoes, xAprox);
         LIKWID_MARKER_STOP("jacobiana");
         temp = timestamp() - temp;
         tempos[INDICE_JACOBIANA] += temp;
 
         // // Resolve SL e calcula seu tempo de execução
-        // temp = timestamp();
-        // LIKWID_MARKER_START("resolucao-snl");
-        // eliminacaoGaussJordan(&mat);
-        // LIKWID_MARKER_STOP("resolucao-snl");
-        // retrossubs(mat,  &deltaX);
-        // temp = timestamp() - temp;
-        // tempos[INDICE_SL] += temp;
+        temp = timestamp();
+        LIKWID_MARKER_START("resolucao-snl");
+        eliminacaoGaussJordanMatTridiagonal(&diagCoeficientes, &termosLivres, &deltaX, sistema.numFuncoes);
+        LIKWID_MARKER_STOP("resolucao-snl");
+        temp = timestamp() - temp;
+        tempos[INDICE_SL] += temp;
 
-        // // Atualiza xAprox com as novas aproximações encontradas e obtém norma do delta x
-        // normaDelta = 0;
-        // for (int j = 0; j < sistema.numFuncoes; j++) {
-        //     xAprox[j] += deltaX[j];
+        // Atualiza xAprox com as novas aproximações encontradas e obtém norma do delta x
+        normaDelta = 0;
+        for (int j = 0; j < sistema.numFuncoes; j++) {
+            xAprox[j] += deltaX[j];
 
-        //     fprintf(saida, "x%d = %lf\n", j+1, xAprox[j]);
-        //     if (fabs(deltaX[j]) > normaDelta) {
-        //         normaDelta = fabs(deltaX[j]);
-        //     }
-        // }
+            fprintf(saida, "x%d = %lf\n", j+1, xAprox[j]);
+            if (fabs(deltaX[j]) > normaDelta) {
+                normaDelta = fabs(deltaX[j]);
+            }
+        }
 
-        // // Verifica de se norma do delta x satisfaz o critério epsilon
-        // if (normaDelta < epsilon) {
-        //     free(deltaX);
-        //     freeMatChars(&vars);
-        //     finalizaMatQuad(&mat);
-        //     freeMatPonteirosVoids(&matDerivParcial, sistema.numFuncoes, sistema.numFuncoes);
+        // Verifica de se norma do delta x satisfaz o critério epsilon
+        if (normaDelta < epsilon) {
+            free(deltaX);
+            freeMatChars(&vars);
+            freeMatPonteirosVoids(&diagDerivadas, sistema.numFuncoes, sistema.numFuncoes);
+            freeMatDoubles(&diagCoeficientes);
 
-        //     tempos[INDICE_TOTAL] = timestamp() - tempos[INDICE_TOTAL];
-        //     printaTemposMetodoNewtonSNL(saida, tempos);
-        //     return 0;
-        // }
+            tempos[INDICE_TOTAL] = timestamp() - tempos[INDICE_TOTAL];
+            printaTemposMetodoNewtonSNL(saida, tempos);
+            return 0;
+        }
     }
     LIKWID_MARKER_STOP("metodo-newton");  
     tempos[INDICE_TOTAL] = timestamp() - tempos[INDICE_TOTAL];
@@ -389,7 +409,7 @@ int metodoNewtonSNLMatTridiagonal(SNL sistema, double *xAprox, double epsilon, i
     LIKWID_MARKER_CLOSE;
     free(deltaX);
     freeMatChars(&vars);
-    finalizaMatQuad(&mat);
     freeMatPonteirosVoids(&diagDerivadas, sistema.numFuncoes, sistema.numFuncoes);
+    freeMatDoubles(&diagCoeficientes);
     return 0;
 }
