@@ -8,6 +8,7 @@
 #include <matheval.h>
 #include "sistemas.h"
 #include "assert.h"
+#include "utils.h"
 
 #define PAD(n) (isPot2(n)?(n+1):(n))
 

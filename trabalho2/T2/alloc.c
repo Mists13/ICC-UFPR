@@ -3,6 +3,7 @@
     Matheus Pacheco Santos,     GRR20192786,	mps19@inf.ufpr.br
 */
 #include <stdlib.h>
+#include "utils.h"
 
 #define PAD(n) (isPot2(n)?(n+1):(n))
 

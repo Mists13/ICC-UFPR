@@ -1,7 +1,7 @@
 # Luzia Millena Santos Silva, GRR20185174, 	lmss18@inf.ufpr.br
 # Matheus Pacheco Santos,     GRR20192786,	mps19@inf.ufpr.br
 
-CC = gcc -g
+CC = gcc # -std=c11
 PREFIX = ${HOME}
 LIBDIR = $(PREFIX)/lib
 INCDIR = $(PREFIX)/include
@@ -10,32 +10,34 @@ LIKWID = /home/soft/likwid
 LIKWID_FLAGS = -I$(LIKWID)/include -DLIKWID_PERFMON 
 LIKWID_LIBS = -L$(LIKWID)/lib -llikwid
 
-AVX_FLAGS = -O3 -mavx2 -march=native -fopt-info-vec 
+AVX_FLAGS = -O3 -mavx2 -march=native -fopt-info-vec # -fstrict-aliasing
 
-CFLAGS = -Wall -std=c11 -I$(INCDIR) $(AVX_FLAGS) $(LIKWID_FLAGS)
-LFLAGS = -Wl,-rpath -Wl,$(LIBDIR) -L$(LIBDIR) -lmatheval $(LIKWID_LIBS)
+CFLAGS = $(LIKWID_FLAGS) 
+LFLAGS = -Wl,-rpath -Wl,$(LIBDIR) -L$(LIBDIR) -lmatheval $(LIKWID_LIBS) -lm
 
 PROG = newtonSNL
-OBJS = utils.o \
-	   alloc.o \
-	   sistemas.o \
-	   newtonSNL.o
+OBJS = utils.o alloc.o sistemas.o newtonSNL.o
 
-# regra default
-all: $(PROG)
+.PHONY: all debug clean limpa purge faxina
 
-# regras de compilação
-%.o: %.c 
-	$(CC) -c $(CFLAGS) $<
+%.o: %.c %.h
+	$(CC) $(CFLAGS) -c $< -o $@
 
-# regras de ligação
-$(PROG): % : $(OBJS) %.o
-	$(CC) -o $@ $^ $(LFLAGS) 
+all: likwid
 
-# remove arquivos temporários
-clean:
-	-rm -f $(OBJS) *~
- 
-# remove tudo o que não for o código-fonte
-purge: clean
-	-rm -f $(PROG)
+debug:            CFLAGS += -g -DDEBUG
+avx:              CFLAGS += $(AVX_FLAGS)
+
+avx likwid debug: $(PROG)
+
+$(PROG) : % : $(OBJS) %.o
+	$(CC) $(CFLAGS) -o $@ $^ $(LFLAGS)
+
+clean limpa:
+	@echo "Limpando ...."
+	@rm -f *~ *.bak *.tmp
+
+purge faxina:   clean
+	@echo "Faxina ...."
+	@rm -f  $(PROG) $(PROG_AUX) *.o $(OBJS) core a.out
+	@rm -f *.png marker.out *.log

@@ -3,6 +3,7 @@
     Matheus Pacheco Santos,     GRR20192786,	mps19@inf.ufpr.br
 */
 #include <stdio.h>
+#include <math.h>
 #include "utils.h"
 
 /*  Retorna tempo em milisegundos
