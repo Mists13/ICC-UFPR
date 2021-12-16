@@ -20,4 +20,6 @@
 
 double timestamp(void);
 
+int isPot2(int n);
+
 #endif // __UTILS_H__

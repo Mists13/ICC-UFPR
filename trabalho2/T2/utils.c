@@ -20,3 +20,9 @@ double timestamp(void)
   gettimeofday(&tp, NULL);
   return((double)(tp.tv_sec*1000.0 + tp.tv_usec/1000.0));
 }
+
+int isPot2(int n)
+{
+  int k;
+  return (k = log2(n)) == log2(n) ;
+}

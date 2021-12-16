@@ -9,6 +9,8 @@
 #include "sistemas.h"
 #include "assert.h"
 
+#define PAD(n) (isPot2(n)?(n+1):(n))
+
 #ifndef MAX_SIZE_STR
     #define MAX_SIZE_STR 100
 #endif
@@ -33,7 +35,7 @@ int main(int argc, char *argv[]){
         numFuncoes = atoi(input);
 
         // Alocações
-        funcoes = malloc(sizeof(void *) * numFuncoes);
+        funcoes = malloc(sizeof(void *) * PAD(numFuncoes));
         if (funcoes == NULL) {
             if (saida != stdout) {
                 fclose(saida);
@@ -42,7 +44,7 @@ int main(int argc, char *argv[]){
             fprintf(stderr, MSG_ERRO_ALOCACAO);
             return -1;
         }
-        aproxiIni = malloc(sizeof(double) * numFuncoes); 
+        aproxiIni = malloc(sizeof(double) * PAD(numFuncoes)); 
         if (aproxiIni == NULL) {
             if (saida != stdout) {
                 fclose(saida);
@@ -100,5 +102,5 @@ int main(int argc, char *argv[]){
         fclose(saida);
     }
 
-    return 0;
+    return 0; 
 }

@@ -11,6 +11,8 @@
 #include "utils.h"
 #include <likwid.h>
 
+#define PAD(n) (isPot2(n)?(n+1):(n))
+
 #define SUPERIOR 0
 #define PRINCIPAL 1
 #define INFERIOR 2
@@ -290,31 +292,22 @@ int metodoNewtonSNLMatTridiagonal(SNL sistema, double *xAprox, double epsilon, i
     char **vars;
 
     // Alocações
-    deltaX = malloc(sizeof(double) * sistema.numFuncoes);
-    if (deltaX == NULL) {
-        return -1;
-    }
-    termosLivres = malloc(sizeof(double) * sistema.numFuncoes);
-    if (termosLivres == NULL) {
-        return -1;
-    }
-    if (alocaMatPonteirosVoids(sistema.numFuncoes, sistema.numFuncoes, &diagDerivadas) == -1) {
+    deltaX = malloc(sizeof(double) * PAD(sistema.numFuncoes));
+    termosLivres = malloc(sizeof(double) * PAD(sistema.numFuncoes));
+    
+    if (alocaMatPonteirosVoids(sistema.numFuncoes, sistema.numFuncoes, &diagDerivadas) == -1 ||
+        alocaMatDoubles(3, sistema.numFuncoes, &diagCoeficientes) == -1 ||
+        alocaMatChars(sistema.numFuncoes, MAX_SIZE_STR, &vars)) == -1||            // Monta matriz de variavéis, para usar no evaluator_evaluate
+        termosLivres == NULL || deltaX == NULL) {
+
         free(deltaX);
-        return -1;
-    }
-    if (alocaMatDoubles(3, sistema.numFuncoes, &diagCoeficientes) == -1) {
-        free(deltaX);
-        freeMatPonteirosVoids(&diagDerivadas, sistema.numFuncoes, sistema.numFuncoes);
-    }
-    // Monta matriz de variavéis, para usar no evaluator_evaluate
-    if (alocaMatChars(sistema.numFuncoes, MAX_SIZE_STR, &vars)) {
-        free(deltaX);
-        freeMatPonteirosVoids(&diagDerivadas, sistema.numFuncoes, sistema.numFuncoes);
+        free(termosLivres);
         freeMatDoubles(&diagCoeficientes);
+        freeMatPonteirosVoids(&diagDerivadas, sistema.numFuncoes, sistema.numFuncoes);
         return -1;
-    } else {
-        geraVars(&vars, sistema.numFuncoes);
     }
+        
+    geraVars(&vars, sistema.numFuncoes);
 
     LIKWID_MARKER_INIT;
 
@@ -381,6 +374,7 @@ int metodoNewtonSNLMatTridiagonal(SNL sistema, double *xAprox, double epsilon, i
 
         // Atualiza xAprox com as novas aproximações encontradas e obtém norma do delta x
         normaDelta = 0;
+
         for (int j = 0; j < sistema.numFuncoes; j++) {
             xAprox[j] += deltaX[j];
 
