@@ -392,13 +392,13 @@ int metodoNewtonSNLMatTridiagonal(SNL sistema, double *xAprox, double epsilon, i
 
         // Verifica de se norma do delta x satisfaz o critério epsilon
         if (normaDelta < epsilon) {
+            tempos[INDICE_TOTAL] = timestamp() - tempos[INDICE_TOTAL];
+            printaTemposMetodoNewtonSNL(saida, tempos);
+
             free(deltaX);
             freeMatChars(&vars);
             freeMatPonteirosVoids(&diagDerivadas, sistema.numFuncoes, sistema.numFuncoes);
             freeMatDoubles(&diagCoeficientes);
-
-            tempos[INDICE_TOTAL] = timestamp() - tempos[INDICE_TOTAL];
-            printaTemposMetodoNewtonSNL(saida, tempos);
             return 0;
         }
     }
