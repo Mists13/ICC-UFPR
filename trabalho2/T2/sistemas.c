@@ -13,11 +13,6 @@
 
 #define PAD(n) (isPot2(n)?(n+1):(n))
 
-#define SUPERIOR 0
-#define PRINCIPAL 1
-#define INFERIOR 2
-
-
 #ifndef MAX_SIZE_STR
 #define MAX_SIZE_STR 100
 #endif
@@ -51,6 +46,60 @@ void finalizaSNL(SNL *sistema) {
     free(sistema->funcoes);
 }
 
+int inicializaTridiagonalPonteiros(TridiagonalPonteiros *tridiagonal, int dimensao) {
+    if (alocaMatPonteirosVoids(3, dimensao, &tridiagonal->diagonais) == -1) {
+        return -1;
+    }
+
+    // Por decisão de projeto a sequência escolhida foi essa
+    // Note que no caso de uma tridiagonal vai as digonais superiores e inferiors vão ter dimensao - 1 elementos
+    tridiagonal->superior = tridiagonal->diagonais[0];
+    tridiagonal->principal = tridiagonal->diagonais[1];
+    tridiagonal->inferior = tridiagonal->diagonais[2];
+    return 0;
+}
+
+void finalizaTridiagonalPonteiros(TridiagonalPonteiros *tridiagonal, int dimensao) {
+    freeMatPonteirosVoids(&tridiagonal->diagonais, 3, dimensao);
+    tridiagonal->superior = tridiagonal->principal = tridiagonal->inferior = NULL;
+}
+
+int inicializaTridiagonalDoubles(TridiagonalDoubles *tridiagonal, int dimensao) {
+    if (alocaMatDoubles(3, dimensao, &tridiagonal->diagonais) == -1) {
+        return -1;
+    }
+
+    // Por decisão de projeto a sequência escolhida foi essa
+    // Note que no caso de uma tridiagonal vai as digonais superiores e inferiors vão ter dimensao - 1 elementos
+    tridiagonal->superior = tridiagonal->diagonais[0];
+    tridiagonal->principal = tridiagonal->diagonais[1];
+    tridiagonal->inferior = tridiagonal->diagonais[2];
+    return 0;
+};
+
+void finalizaTridiagonalDoubles(TridiagonalDoubles *tridiagonal) {
+    freeMatDoubles(&tridiagonal->diagonais);
+    tridiagonal->superior = tridiagonal->principal = tridiagonal->inferior = NULL;
+}
+
+int inicializaMatSLTridiagonal(MatSLTridiagonal *mat, int dimensao) {
+    mat->dimensao = dimensao;
+    mat->termosLivres = malloc(sizeof(double) * PAD(dimensao));
+
+    if (mat->termosLivres == NULL) {
+        return -1;
+    } else if (inicializaTridiagonalDoubles(&mat->tridiagonal, dimensao) == -1) {
+        return -1;
+    } else {
+        return 0;
+    }
+}
+
+void finalizaMatSLTridiagonal(MatSLTridiagonal *mat) {
+    free(mat->termosLivres);
+    finalizaTridiagonalDoubles(&mat->tridiagonal);
+}
+
 void geraVars(char ***vars, int dimensao) {
     for (int i = 0; i <  dimensao; i++) {
         sprintf((*vars)[i] , "x%d", i + 1);
@@ -66,115 +115,133 @@ void printaTemposMetodoNewtonSNL(FILE *saida, double tempos[4]) {
     fprintf(saida, "###########\n");
 }
 
-void calculaMatJacobianaTriadigonal(void ***tridiagDeriv, double ***tridiagJacobiana, char **vars, int numFuncoes, double *valoresX) {
+void calculaMatJacobianaTriadigonal(TridiagonalPonteiros derivadas, MatSLTridiagonal *matSL, char **vars, double *valoresX) {
     int i = 0;
-    int limit = (numFuncoes- 1) - (numFuncoes - 1) % 4; 
+    int limit = (matSL->dimensao- 1) - (matSL->dimensao - 1) % 4; 
     for (i = 0; i < limit; i += 4) {
-        (*tridiagJacobiana)[SUPERIOR][i] = evaluator_evaluate(tridiagDeriv[SUPERIOR][i], numFuncoes, vars, valoresX);
-        (*tridiagJacobiana)[PRINCIPAL][i] = evaluator_evaluate(tridiagDeriv[PRINCIPAL][i], numFuncoes, vars, valoresX);
-        (*tridiagJacobiana)[INFERIOR][i] = evaluator_evaluate(tridiagDeriv[INFERIOR][i], numFuncoes, vars, valoresX);
+        matSL->tridiagonal.superior[i] = evaluator_evaluate(derivadas.superior[i], matSL->dimensao, vars, valoresX);
+        matSL->tridiagonal.principal[i] = evaluator_evaluate(derivadas.principal[i], matSL->dimensao, vars, valoresX);
+        matSL->tridiagonal.inferior[i] = evaluator_evaluate(derivadas.inferior[i], matSL->dimensao, vars, valoresX);
         
-        (*tridiagJacobiana)[SUPERIOR][i+1] = evaluator_evaluate(tridiagDeriv[SUPERIOR][i+1], numFuncoes, vars, valoresX);
-        (*tridiagJacobiana)[PRINCIPAL][i+1] = evaluator_evaluate(tridiagDeriv[PRINCIPAL][i+1], numFuncoes, vars, valoresX);
-        (*tridiagJacobiana)[INFERIOR][i+1] = evaluator_evaluate(tridiagDeriv[INFERIOR][i+1], numFuncoes, vars, valoresX);
+        matSL->tridiagonal.superior[i+1] = evaluator_evaluate(derivadas.superior[i+1], matSL->dimensao, vars, valoresX);
+        matSL->tridiagonal.principal[i+1] = evaluator_evaluate(derivadas.principal[i+1], matSL->dimensao, vars, valoresX);
+        matSL->tridiagonal.inferior[i+1] = evaluator_evaluate(derivadas.inferior[i+1], matSL->dimensao, vars, valoresX);
 
-        (*tridiagJacobiana)[SUPERIOR][i+2] = evaluator_evaluate(tridiagDeriv[SUPERIOR][i+2], numFuncoes, vars, valoresX);
-        (*tridiagJacobiana)[PRINCIPAL][i+2] = evaluator_evaluate(tridiagDeriv[PRINCIPAL][i+2], numFuncoes, vars, valoresX);
-        (*tridiagJacobiana)[INFERIOR][i+2] = evaluator_evaluate(tridiagDeriv[INFERIOR][i+2], numFuncoes, vars, valoresX);
+        matSL->tridiagonal.superior[i+2] = evaluator_evaluate(derivadas.superior[i+2], matSL->dimensao, vars, valoresX);
+        matSL->tridiagonal.principal[i+2] = evaluator_evaluate(derivadas.principal[i+2], matSL->dimensao, vars, valoresX);
+        matSL->tridiagonal.inferior[i+2] = evaluator_evaluate(derivadas.inferior[i+2], matSL->dimensao, vars, valoresX);
 
-        (*tridiagJacobiana)[SUPERIOR][i+3] = evaluator_evaluate(tridiagDeriv[SUPERIOR][i+3], numFuncoes, vars, valoresX);
-        (*tridiagJacobiana)[PRINCIPAL][i+3] = evaluator_evaluate(tridiagDeriv[PRINCIPAL][i+3], numFuncoes, vars, valoresX);
-        (*tridiagJacobiana)[INFERIOR][i+3] = evaluator_evaluate(tridiagDeriv[INFERIOR][i+3], numFuncoes, vars, valoresX);
+        matSL->tridiagonal.superior[i+3] = evaluator_evaluate(derivadas.superior[i+3], matSL->dimensao, vars, valoresX);
+        matSL->tridiagonal.principal[i+3] = evaluator_evaluate(derivadas.principal[i+3], matSL->dimensao, vars, valoresX);
+        matSL->tridiagonal.inferior[i+3] = evaluator_evaluate(derivadas.inferior[i+3], matSL->dimensao, vars, valoresX);
     }
 
     // Resíduos
-    for (i = limit; i < numFuncoes - 1; i++) {
-        (*tridiagJacobiana)[SUPERIOR][i] = evaluator_evaluate(tridiagDeriv[SUPERIOR][i], numFuncoes, vars, valoresX);
-        (*tridiagJacobiana)[PRINCIPAL][i] = evaluator_evaluate(tridiagDeriv[PRINCIPAL][i], numFuncoes, vars, valoresX);
-        (*tridiagJacobiana)[INFERIOR][i] = evaluator_evaluate(tridiagDeriv[INFERIOR][i], numFuncoes, vars, valoresX);
+    for (i = limit; i < matSL->dimensao  - 1; i++) {
+        matSL->tridiagonal.superior[i] = evaluator_evaluate(derivadas.superior[i], matSL->dimensao, vars, valoresX);
+        matSL->tridiagonal.principal[i] = evaluator_evaluate(derivadas.principal[i], matSL->dimensao, vars, valoresX);
+        matSL->tridiagonal.inferior[i] = evaluator_evaluate(derivadas.inferior[i], matSL->dimensao, vars, valoresX);
     }
-    (*tridiagJacobiana)[PRINCIPAL][i] = evaluator_evaluate(tridiagDeriv[PRINCIPAL][i], numFuncoes, vars, valoresX);
+    matSL->tridiagonal.principal[i] = evaluator_evaluate(derivadas.principal[i], matSL->dimensao, vars, valoresX);
 }
 
-// Calcula as três diagonais da matriz de derivadas parciais usando as técnicas Unroll & Jam
-void geraMatTridiagonalDerivParcial(void ****diagonais, SNL sistema) {
+// Calcula as três diagonais da matriz triadigonal de derivadas parciais usando as técnicas Unroll & Jam
+void geraMatTridiagonalDerivParcial(TridiagonalPonteiros *tridiagonal, SNL sistema) {
     char var[MAX_SIZE_STR];
     int i = 0;
     int limit = (sistema.numFuncoes - 1) - (sistema.numFuncoes - 1) % 4; 
     for (i = 0; i < limit; i += 4) {
         sprintf(var,"x%d", i+2);
-        (*diagonais)[SUPERIOR][i] = evaluator_derivative(sistema.funcoes[i], var);
+        tridiagonal->superior[i] = evaluator_derivative(sistema.funcoes[i], var);
         sprintf(var,"x%d", i+1);
-        (*diagonais)[PRINCIPAL][i] = evaluator_derivative(sistema.funcoes[i], var);
-        (*diagonais)[INFERIOR][i] = evaluator_derivative(sistema.funcoes[i+1], var);
+        tridiagonal->principal[i] = evaluator_derivative(sistema.funcoes[i], var);
+        tridiagonal->inferior[i] = evaluator_derivative(sistema.funcoes[i+1], var);
 
         sprintf(var,"x%d", i+3);
-        (*diagonais)[SUPERIOR][i+1] = evaluator_derivative(sistema.funcoes[i+1], var);
+        tridiagonal->superior[i+1] = evaluator_derivative(sistema.funcoes[i+1], var);
         sprintf(var,"x%d", i+2);
-        (*diagonais)[PRINCIPAL][i+1] = evaluator_derivative(sistema.funcoes[i+1], var);
-        (*diagonais)[INFERIOR][i+1] = evaluator_derivative(sistema.funcoes[i+2], var);
+        tridiagonal->principal[i+1] = evaluator_derivative(sistema.funcoes[i+1], var);
+        tridiagonal->inferior[i+1] = evaluator_derivative(sistema.funcoes[i+2], var);
 
         sprintf(var,"x%d", i+4);
-        (*diagonais)[SUPERIOR][i+2] = evaluator_derivative(sistema.funcoes[i+2], var);
+        tridiagonal->superior[i+2] = evaluator_derivative(sistema.funcoes[i+2], var);
         sprintf(var,"x%d", i+3);
-        (*diagonais)[PRINCIPAL][i+2] = evaluator_derivative(sistema.funcoes[i+2], var);
-        (*diagonais)[INFERIOR][i+2] = evaluator_derivative(sistema.funcoes[i+3], var);
+        tridiagonal->principal[i+2] = evaluator_derivative(sistema.funcoes[i+2], var);
+        tridiagonal->inferior[i+2] = evaluator_derivative(sistema.funcoes[i+3], var);
 
         sprintf(var,"x%d", i+5);
-        (*diagonais)[SUPERIOR][i+3] = evaluator_derivative(sistema.funcoes[i+3], var);
+        tridiagonal->superior[i+3] = evaluator_derivative(sistema.funcoes[i+3], var);
         sprintf(var,"x%d", i+4);
-        (*diagonais)[PRINCIPAL][i+3] = evaluator_derivative(sistema.funcoes[i+3], var);
-        (*diagonais)[INFERIOR][i+3] = evaluator_derivative(sistema.funcoes[i+4], var);
+        tridiagonal->principal[i+3] = evaluator_derivative(sistema.funcoes[i+3], var);
+        tridiagonal->inferior[i+3] = evaluator_derivative(sistema.funcoes[i+4], var);
     }
 
     // Resíduos
     for (i = limit; i < sistema.numFuncoes - 1; i++) {
         sprintf(var,"x%d", i+2);
-        (*diagonais)[SUPERIOR][i] = evaluator_derivative(sistema.funcoes[i], var);
+        tridiagonal->superior[i] = evaluator_derivative(sistema.funcoes[i], var);
         sprintf(var,"x%d", i+1);
-        (*diagonais)[PRINCIPAL][i] = evaluator_derivative(sistema.funcoes[i], var);
-        (*diagonais)[INFERIOR][i] = evaluator_derivative(sistema.funcoes[i+1], var);
+        tridiagonal->principal[i] = evaluator_derivative(sistema.funcoes[i], var);
+        tridiagonal->inferior[i] = evaluator_derivative(sistema.funcoes[i+1], var);
     }
     sprintf(var,"x%d", i+1);
-    (*diagonais)[PRINCIPAL][i] = evaluator_derivative(sistema.funcoes[i], var);
+    tridiagonal->principal[i] = evaluator_derivative(sistema.funcoes[i], var);
 }
 
-void eliminacaoGaussJordanMatTridiagonal(double ***mat, double **termosLivres, double **x, int numFuncoes) {
+void eliminacaoGaussJordanMatTridiagonal(MatSLTridiagonal *matSL, double **x) {
     double m;
-    for (int i = 0; i < numFuncoes - 1; i++) {
-        m = (*mat)[SUPERIOR][i] / (*mat)[PRINCIPAL][i];
-        (*mat)[SUPERIOR][i] = 0.0;
-        (*mat)[PRINCIPAL][i+1] -= (*mat)[INFERIOR][i] *m;
-        (*termosLivres)[i+1] -=  (*termosLivres)[i] * m;
+    for (int i = 0; i < matSL->dimensao - 1; i++) {
+        m = matSL->tridiagonal.superior[i] / matSL->tridiagonal.principal[i];
+        matSL->tridiagonal.superior[i] = 0.0;
+        matSL->tridiagonal.principal[i+1] -= matSL->tridiagonal.inferior[i] *m;
+        matSL->termosLivres[i+1] -=  matSL->termosLivres[i] * m;
     }
 
-    (*x)[numFuncoes-1] = (*termosLivres)[numFuncoes-1] / (*mat)[PRINCIPAL][numFuncoes-1];
-    for (int i = numFuncoes-2; i >= 0; --i) {
-        (*x)[i] = ((*termosLivres)[i] - (*mat)[INFERIOR][i] * (*x)[i+1]) / (*mat)[1][PRINCIPAL];
+    (*x)[matSL->dimensao-1] = matSL->termosLivres[matSL->dimensao-1] / matSL->tridiagonal.principal[matSL->dimensao-1];
+    for (int i = matSL->dimensao - 2; i >= 0; --i) {
+        (*x)[i] = (matSL->termosLivres[i] - matSL->tridiagonal.inferior[i] * (*x)[i+1]) / matSL->tridiagonal.principal[i];
     }
+}
+
+int alocacoesNewtonSNLMatTridiagonal(double **deltaX, MatSLTridiagonal *matSL, TridiagonalPonteiros *derivadas, char ***vars, int dimensao) {
+    (*deltaX) = malloc(sizeof(double) * PAD(dimensao));
+    if ((*deltaX) == NULL) {
+        return -1;
+    } 
+    if (alocaMatChars(dimensao, MAX_SIZE_STR, vars) == -1) {
+        free((*deltaX));
+        return -1;
+    }       
+    if (inicializaMatSLTridiagonal(matSL, dimensao) == -1) {
+        free((*deltaX));
+        freeMatChars(vars);
+        return -1;
+    }
+    if (inicializaTridiagonalPonteiros(derivadas, dimensao) == -1) {
+        free((*deltaX));
+        freeMatChars(vars);
+        finalizaMatSLTridiagonal(matSL);
+        return-1;
+    }
+
+    return 0;
+}
+
+void desalocacoesNewtonSNLMatTridiagonal(double **deltaX, MatSLTridiagonal *matSL, TridiagonalPonteiros *derivadas, char ***vars, int dimensao) {
+    free((*deltaX));
+    finalizaMatSLTridiagonal(matSL);
+    finalizaTridiagonalPonteiros(derivadas, dimensao);
+    freeMatChars(vars);
 }
 
 int metodoNewtonSNLMatTridiagonal(SNL sistema, double *xAprox, double epsilon, int maxIteracoes, FILE *saida) {
-    double *deltaX, *termosLivres, **diagCoeficientes, normaFuncoes, normaDelta, temp, tempos[4];
-    void ***diagDerivadas;
+    double *deltaX, normaFuncoes, normaDelta, temp, tempos[4];
+    TridiagonalPonteiros derivadas;
+    MatSLTridiagonal matSL;
     char **vars;
 
-    // Alocações
-    deltaX = malloc(sizeof(double) * PAD(sistema.numFuncoes));
-    termosLivres = malloc(sizeof(double) * PAD(sistema.numFuncoes));
-    
-    if (alocaMatPonteirosVoids(sistema.numFuncoes, sistema.numFuncoes, &diagDerivadas) == -1 ||
-        alocaMatDoubles(3, sistema.numFuncoes, &diagCoeficientes) == -1 ||
-        alocaMatChars(sistema.numFuncoes, MAX_SIZE_STR, &vars) == -1||            // Monta matriz de variavéis, para usar no evaluator_evaluate
-        termosLivres == NULL || deltaX == NULL) {
-
-        free(deltaX);
-        free(termosLivres);
-        freeMatDoubles(&diagCoeficientes);
-        freeMatPonteirosVoids(&diagDerivadas, sistema.numFuncoes, sistema.numFuncoes);
-        return -1;
-    }
-        
+    // Faz alocações e gera string das variaveis que serão usadas pelas funcoes da lib matheval
+    alocacoesNewtonSNLMatTridiagonal(&deltaX, &matSL, &derivadas, &vars, sistema.numFuncoes);
     geraVars(&vars, sistema.numFuncoes);
 
     LIKWID_MARKER_INIT;
@@ -182,7 +249,7 @@ int metodoNewtonSNLMatTridiagonal(SNL sistema, double *xAprox, double epsilon, i
     // Gera matriz de derivadas parciais e calcula seu tempo de execução
     tempos[INDICE_DERIVADAS] = timestamp();
     LIKWID_MARKER_START("mat-derivadas-parciais");  
-    geraMatTridiagonalDerivParcial(&diagDerivadas, sistema);
+    geraMatTridiagonalDerivParcial(&derivadas, sistema);
     LIKWID_MARKER_STOP("mat-derivadas-parciais");  
     tempos[INDICE_DERIVADAS] = timestamp() - tempos[INDICE_DERIVADAS];
     
@@ -201,23 +268,19 @@ int metodoNewtonSNLMatTridiagonal(SNL sistema, double *xAprox, double epsilon, i
         // Defini norma de funções e termos independentes
         normaFuncoes = 0;
         for (int j = 0; j < sistema.numFuncoes; j++) {
-            termosLivres[j] = evaluator_evaluate(sistema.funcoes[j], sistema.numFuncoes, vars, xAprox);
+            matSL.termosLivres[j] = evaluator_evaluate(sistema.funcoes[j], sistema.numFuncoes, vars, xAprox);
 
-            if (fabs(termosLivres[j]) > normaFuncoes) {
-                normaFuncoes = fabs(termosLivres[j]);
+            if (fabs(matSL.termosLivres[j]) > normaFuncoes) {
+                normaFuncoes = fabs(matSL.termosLivres[j]);
             }
-            termosLivres[j] *= -1;
+            matSL.termosLivres[j] *= -1;
         }
         
         // Verifica se a norma das funções satisfaz o critério epsilon
         if (normaFuncoes < epsilon) {
-            free(deltaX);
-            freeMatChars(&vars);
-            freeMatPonteirosVoids(&diagDerivadas, sistema.numFuncoes, sistema.numFuncoes);
-            freeMatDoubles(&diagCoeficientes);
-
             tempos[INDICE_TOTAL] = timestamp() - tempos[INDICE_TOTAL];
             printaTemposMetodoNewtonSNL(saida, tempos);
+            desalocacoesNewtonSNLMatTridiagonal(&deltaX, &matSL, &derivadas, &vars, sistema.numFuncoes);
             return 0;
         }
 
@@ -227,15 +290,15 @@ int metodoNewtonSNLMatTridiagonal(SNL sistema, double *xAprox, double epsilon, i
         // Calcula jacobiana e seu tempo de execução
         temp = timestamp();
         LIKWID_MARKER_START("jacobiana");
-        calculaMatJacobianaTriadigonal(diagDerivadas, &diagCoeficientes, vars, sistema.numFuncoes, xAprox);
+        calculaMatJacobianaTriadigonal(derivadas, &matSL, vars, xAprox);
         LIKWID_MARKER_STOP("jacobiana");
         temp = timestamp() - temp;
         tempos[INDICE_JACOBIANA] += temp;
 
-        // // Resolve SL e calcula seu tempo de execução
+        // Resolve SL e calcula seu tempo de execução
         temp = timestamp();
         LIKWID_MARKER_START("resolucao-snl");
-        eliminacaoGaussJordanMatTridiagonal(&diagCoeficientes, &termosLivres, &deltaX, sistema.numFuncoes);
+        eliminacaoGaussJordanMatTridiagonal(&matSL, &deltaX);
         LIKWID_MARKER_STOP("resolucao-snl");
         temp = timestamp() - temp;
         tempos[INDICE_SL] += temp;
@@ -256,22 +319,15 @@ int metodoNewtonSNLMatTridiagonal(SNL sistema, double *xAprox, double epsilon, i
         if (normaDelta < epsilon) {
             tempos[INDICE_TOTAL] = timestamp() - tempos[INDICE_TOTAL];
             printaTemposMetodoNewtonSNL(saida, tempos);
-
-            free(deltaX);
-            freeMatChars(&vars);
-            freeMatPonteirosVoids(&diagDerivadas, sistema.numFuncoes, sistema.numFuncoes);
-            freeMatDoubles(&diagCoeficientes);
+            desalocacoesNewtonSNLMatTridiagonal(&deltaX, &matSL, &derivadas, &vars, sistema.numFuncoes);
             return 0;
         }
     }
     LIKWID_MARKER_STOP("metodo-newton");  
     tempos[INDICE_TOTAL] = timestamp() - tempos[INDICE_TOTAL];
     printaTemposMetodoNewtonSNL(saida, tempos);
+    desalocacoesNewtonSNLMatTridiagonal(&deltaX, &matSL, &derivadas, &vars, sistema.numFuncoes);
     
     LIKWID_MARKER_CLOSE;
-    free(deltaX);
-    freeMatChars(&vars);
-    freeMatPonteirosVoids(&diagDerivadas, sistema.numFuncoes, sistema.numFuncoes);
-    freeMatDoubles(&diagCoeficientes);
     return 0;
 }

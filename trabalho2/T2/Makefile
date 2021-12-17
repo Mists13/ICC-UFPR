@@ -12,7 +12,7 @@ LIKWID_LIBS = -L$(LIKWID)/lib -llikwid
 
 AVX_FLAGS = -O3 -mavx2 -march=native -fopt-info-vec # -fstrict-aliasing
 
-CFLAGS = $(LIKWID_FLAGS) 
+CFLAGS = -Wall $(LIKWID_FLAGS) 
 LFLAGS = -Wl,-rpath -Wl,$(LIBDIR) -L$(LIBDIR) -lmatheval $(LIKWID_LIBS) -lm
 
 PROG = newtonSNL

@@ -32,10 +32,26 @@ typedef struct
 
 typedef  struct
 {
+    double *inferior;
+    double *principal;
+    double *superior;
+    double **diagonais;
+} TridiagonalDoubles;
+
+typedef struct
+{
+    void **inferior;
+    void **principal;
+    void **superior;
+    void ***diagonais;
+} TridiagonalPonteiros;
+
+typedef struct
+{
     int dimensao;
-    double **coefecientes;
-    double **termosLivres;
-} MatTridiagonal;
+    double *termosLivres;
+    TridiagonalDoubles tridiagonal;
+} MatSLTridiagonal;
 
 /* Seta funções e numFuncoes */
 void inicializaSNL(SNL *sistema, void ***funcoes, int numFuncoes);
@@ -45,11 +61,7 @@ void inicializaSNL(SNL *sistema, void ***funcoes, int numFuncoes);
 void finalizaSNL(SNL *sistema);
 
 
-/* Aloca espaço para a matriz de acordo com a dimensão. Utiliza a lib alloc.h
- * Retorna 0 se houve sucesso, caso contrário retorna -1 representando falha de alocação - única falha possível 
- */
-int inicializaMatQuad(MatQuadraticaSL *mat, int dimensao);
-
+int inicializaTridiagonaDoubles(TridiagonalDoubles *tridiagonal, int dimensao);
 
 /* Libera memória alocada dinâmicamente */
 void finalizaMatQuad(MatQuadraticaSL *mat);
@@ -60,7 +72,6 @@ void finalizaMatQuad(MatQuadraticaSL *mat);
  */
 void geraMatDerivParcial(void **diagPrincipal, SNL sistema);
 
-void geraMatTridiagonalDerivParcial(void ****diagonais, SNL sistema);
 
 /* Realiza retro-substituição do SL representado por mat e armazena o resultado em x 
  * A matriz de coefecientes deve triangular inferior
