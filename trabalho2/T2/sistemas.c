@@ -82,6 +82,8 @@ void finalizaTridiagonalDoubles(TridiagonalDoubles *tridiagonal) {
     tridiagonal->superior = tridiagonal->principal = tridiagonal->inferior = NULL;
 }
 
+
+/* Inicializa dimensao, array de termos livres e matriz trigiagonal */
 int inicializaMatSLTridiagonal(MatSLTridiagonal *mat, int dimensao) {
     mat->dimensao = dimensao;
     mat->termosLivres = malloc(sizeof(double) * PAD(dimensao));
@@ -115,7 +117,7 @@ void printaTemposMetodoNewtonSNL(FILE *saida, double tempos[4]) {
     fprintf(saida, "###########\n");
 }
 
-void calculaMatJacobianaTriadigonal(TridiagonalPonteiros derivadas, MatSLTridiagonal *matSL, char **vars, double *valoresX) {
+void calculaMatJacobianaTridiagonal(TridiagonalPonteiros derivadas, MatSLTridiagonal *matSL, char **vars, double *valoresX) {
     int i = 0;
     int limit = (matSL->dimensao- 1) - (matSL->dimensao - 1) % 4; 
     for (i = 0; i < limit; i += 4) {
@@ -145,7 +147,10 @@ void calculaMatJacobianaTriadigonal(TridiagonalPonteiros derivadas, MatSLTridiag
     matSL->tridiagonal.principal[i] = evaluator_evaluate(derivadas.principal[i], matSL->dimensao, vars, valoresX);
 }
 
-// Calcula as três diagonais da matriz triadigonal de derivadas parciais usando as técnicas Unroll & Jam
+
+/* Gera as três diagonais da matriz triadigonal para armazenar derivadas parciais
+ * usando as técnicas Unroll & Jam
+ */
 void geraMatTridiagonalDerivParcial(TridiagonalPonteiros *tridiagonal, SNL sistema) {
     char var[MAX_SIZE_STR];
     int i = 0;
@@ -188,8 +193,13 @@ void geraMatTridiagonalDerivParcial(TridiagonalPonteiros *tridiagonal, SNL siste
     tridiagonal->principal[i] = evaluator_derivative(sistema.funcoes[i], var);
 }
 
+/* Método da eliminação de Gauss otimizado, utilizando representaçao de sistema
+ * através de 3 arrays
+ */
 void eliminacaoGaussJordanMatTridiagonal(MatSLTridiagonal *matSL, double **x) {
     double m;
+
+    // Triangularização
     for (int i = 0; i < matSL->dimensao - 1; i++) {
         m = matSL->tridiagonal.superior[i] / matSL->tridiagonal.principal[i];
         matSL->tridiagonal.superior[i] = 0.0;
@@ -197,6 +207,7 @@ void eliminacaoGaussJordanMatTridiagonal(MatSLTridiagonal *matSL, double **x) {
         matSL->termosLivres[i+1] -=  matSL->termosLivres[i] * m;
     }
 
+    // Retrosubstituição
     (*x)[matSL->dimensao-1] = matSL->termosLivres[matSL->dimensao-1] / matSL->tridiagonal.principal[matSL->dimensao-1];
     for (int i = matSL->dimensao - 2; i >= 0; --i) {
         (*x)[i] = (matSL->termosLivres[i] - matSL->tridiagonal.inferior[i] * (*x)[i+1]) / matSL->tridiagonal.principal[i];
@@ -265,7 +276,7 @@ int metodoNewtonSNLMatTridiagonal(SNL sistema, double *xAprox, double epsilon, i
     
     LIKWID_MARKER_START("metodo-newton");
     for (int i = 0; i < maxIteracoes; i++) {
-        // Defini norma de funções e termos independentes
+        // Define norma de funções e termos independentes
         normaFuncoes = 0;
         for (int j = 0; j < sistema.numFuncoes; j++) {
             matSL.termosLivres[j] = evaluator_evaluate(sistema.funcoes[j], sistema.numFuncoes, vars, xAprox);
@@ -290,7 +301,7 @@ int metodoNewtonSNLMatTridiagonal(SNL sistema, double *xAprox, double epsilon, i
         // Calcula jacobiana e seu tempo de execução
         temp = timestamp();
         LIKWID_MARKER_START("jacobiana");
-        calculaMatJacobianaTriadigonal(derivadas, &matSL, vars, xAprox);
+        calculaMatJacobianaTridiagonal(derivadas, &matSL, vars, xAprox);
         LIKWID_MARKER_STOP("jacobiana");
         temp = timestamp() - temp;
         tempos[INDICE_JACOBIANA] += temp;
@@ -315,7 +326,7 @@ int metodoNewtonSNLMatTridiagonal(SNL sistema, double *xAprox, double epsilon, i
             }
         }
 
-        // Verifica de se norma do delta x satisfaz o critério epsilon
+        // Verifica se norma do delta x satisfaz o critério epsilon
         if (normaDelta < epsilon) {
             tempos[INDICE_TOTAL] = timestamp() - tempos[INDICE_TOTAL];
             printaTemposMetodoNewtonSNL(saida, tempos);

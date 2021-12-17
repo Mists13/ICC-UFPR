@@ -78,18 +78,6 @@ int main(int argc, char *argv[]){
         scanf("%d", &maxIteracoes);
         scanf("%*c"); // Limpa a linha - consome todos os '\n's
 
-        // Quando o retorno é -1, é erro de alocação. Único erro possível para esta função
-        // if (metodoNewtonSNL(sistema, aproxiIni, epsilon, maxIteracoes, saida) == -1) {
-        //     if (saida != stdout) {
-        //         fclose(saida);
-        //     }
-        //     finalizaSNL(&sistema);
-        //     free(aproxiIni);
-
-        //     fprintf(stderr, MSG_ERRO_ALOCACAO);
-        //     return -1;
-        // }
-
         metodoNewtonSNLMatTridiagonal(sistema, aproxiIni, epsilon, maxIteracoes, saida);
 
         // Limpa memória alocada

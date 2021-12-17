@@ -9,64 +9,79 @@
 
 int alocaMatDoubles(int lin, int col, double ***mat) {
     int i;
-
-    // aloca um vetor com os ponteiros e os elementos da matriz
-    (*mat) = malloc (lin * sizeof (double*) + lin * PAD(col) * sizeof (double));
+    int padding = PAD(col);
+    
+    // aloca um vetor de lin ponteiros para linhas
+    (*mat) = malloc( lin * sizeof (double*));
     if ((*mat) == NULL) {
         return -1;
     }
 
-    // ajusta o ponteiro da primeira linha
-    (*mat)[0] = (double*)((*mat) + lin);
-    
-    // ajusta os ponteiros das demais linhas (i > 0)
-    for (i = 1; i < lin; i++)
-    (*mat)[i] = (*mat)[0] + (i * PAD(col) ) ;
-    
+    // aloca um vetor com todos os doubles da matriz
+    (*mat)[0] = malloc(lin * padding * sizeof(double));
+    if ((*mat)[0] == NULL) {
+        free((*mat));
+        return -1;
+    }
+
+    // ajusta os demais ponteiros de linhas (i > 0)
+    for (i=1; i < lin; i++) {
+        (*mat)[i] = (*mat) [0] + i * padding ;
+    }
     return 0;
 }
 
 int alocaMatChars(int lin, int col, char ***mat) {
     int i;
     
-    // aloca um vetor com os ponteiros e os elementos da matriz
-    (*mat) = malloc (lin * sizeof (char*) + lin * PAD(col) * sizeof (char));
-    if((*mat) == NULL) {
+    int padding = PAD(col);
+    // aloca um vetor de lin ponteiros para linhas
+    (*mat) = malloc(lin * sizeof (char*));
+    if ((*mat) == NULL) {
         return -1;
     }
-    
-    // ajusta o ponteiro da primeira linha
-    (*mat)[0] = (char*)((*mat) + lin);
-    
-    // ajusta os ponteiros das demais linhas (i > 0)
-    for (i=1; i < lin; i++)
-    (*mat)[i] = (*mat)[0] + (i * PAD(col) ) ;
-    
+    /// aloca um vetor com todos os chars da matriz
+    (*mat)[0] = malloc(lin * padding * sizeof (char));
+    if ((*mat)[0] == NULL) {
+        free((*mat));
+        return -1;
+    }
+
+    // ajusta os demais ponteiros de linhas (i > 0)
+    for (i = 1; i < lin; i++)
+        (*mat)[i] = (*mat)[0] + i * padding;
     return 0;
 }
 
 int alocaMatPonteirosVoids(int lin, int col, void ****mat) {
-    int i;
+    int i, j;
+    int padding = PAD(col);
     
-    // aloca um vetor com os ponteiros e os elementos da matriz
-    (*mat) = malloc (lin * sizeof (void**) + lin * PAD(col) * sizeof (void*));
-    
-    // ajusta o ponteiro da primeira linha
-    (*mat)[0] = (void**)((*mat) + lin);
-    
-    // ajusta os ponteiros das demais linhas (i > 0)
+    // aloca um vetor de lin ponteiros para linhas
+    (*mat) = malloc (lin * sizeof (void**));
+
+    // aloca um vetor com todos os voids* da matriz
+    (*mat)[0] = malloc (lin * padding * sizeof (void*));
+
+    // ajusta os demais ponteiros de linhas (i > 0)
     for (i = 1; i < lin; i++)
-    (*mat)[i] = (*mat)[0] + (i * PAD(col) ) ;
-    
+        (*mat)[i] = (*mat)[0] + i * padding;
+
+    // inicialmente os voids* são nulas
+    for (i = 0; i < lin; i++){
+        for (j = 0; j < col; j++) {
+            (*mat)[i][j] = NULL;
+        }
+    }
     return 0;
 }
 
 void freeMatChars(char ***mat) {
-    free((*mat));
+    free((*mat)[0]);
 }
 
 void freeMatDoubles(double ***mat) {
-    free((*mat));
+    free((*mat)[0]);
 }
 
 void freeMatPonteirosVoids(void ****mat, int lin, int col) {
@@ -76,5 +91,5 @@ void freeMatPonteirosVoids(void ****mat, int lin, int col) {
         }
     }
 
-    free((*mat));
+    free((*mat)[0]);
 }
